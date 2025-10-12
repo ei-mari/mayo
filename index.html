@@ -9,10 +9,7 @@
     --accent: #ff7ca8;
     --bg: #f8f8f8;
     --surface: #fff;
-    --shadow: 0 4px 12px rgba(0,0,0,0.08);
-    --shadow-hover: 0 8px 20px rgba(0,0,0,0.15);
     --text: #333;
-    --muted: #777;
   }
   body {
     margin:0;
@@ -26,157 +23,96 @@
     padding:20px;
   }
   h1 {
-    font-weight:600;
-    font-size:1.4rem;
     color:var(--accent);
-    margin:10px 0 20px;
+    font-size:1.2rem;
+    margin-bottom:10px;
+  }
+  .progress {
+    font-size:14px;
+    color:#999;
+    margin-bottom:10px;
   }
 
-  .card-container {
-    width: 100%;
-    max-width: 420px;
-    perspective: 1000px;
-  }
   .card {
-    width: 100%;
-    border-radius: 18px;
-    box-shadow: var(--shadow);
-    transition: transform 0.6s;
-    transform-style: preserve-3d;
-    cursor: pointer;
-    position: relative;
-    background: var(--surface);
-  }
-  .card.flip { transform: rotateY(180deg); }
-
-  .card-face {
-    border-radius: 18px;
-    padding: 28px 20px;
-    text-align: center;
-    min-height: 320px;
-    backface-visibility: hidden;
+    width:90%;
+    max-width:400px;
+    min-height:260px;
+    background:var(--surface);
+    border-radius:16px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.1);
     display:flex;
     flex-direction:column;
-    justify-content:space-between;
     align-items:center;
-    position: absolute;
-    width: 100%;
-    top: 0;
-    left: 0;
-  }
-  .card-face.back {
-    transform: rotateY(180deg);
+    justify-content:center;
+    text-align:center;
+    padding:20px;
   }
 
   .jp, .en {
-    font-size: 20px;
-    color: var(--text);
-    font-weight:500;
-    margin-top:20px;
+    font-size:20px;
+    margin:10px 0;
   }
-  .en { font-size: 22px; color:#444; }
 
   .controls {
-    margin-top: 20px;
-    width:100%;
+    margin-top:15px;
     display:flex;
-    flex-direction:column;
-    align-items:center;
+    justify-content:center;
     gap:10px;
+    flex-wrap:wrap;
   }
 
   button, select {
     border:none;
     border-radius:25px;
-    padding:10px 18px;
+    padding:10px 16px;
     font-size:15px;
     cursor:pointer;
-    transition:.2s ease;
+    transition:0.2s;
   }
-  .btn-main { background:var(--accent); color:#fff; }
-  .btn-main:hover { background:#ff6198; }
-  .btn-sub { background:#f0f0f0; color:#444; }
-  .btn-sub:hover { background:#e4e4e4; }
+  .btn-pink { background:var(--accent); color:#fff; }
+  .btn-yellow { background:#f8c24a; color:#fff; }
+  .btn-blue { background:#4da7c1; color:#fff; }
+  .btn-pink:hover { background:#ff6198; }
 
-  select {
-    padding:8px 14px;
-    border-radius:20px;
-    border:1px solid #ddd;
-    background:#fff;
-    color:#333;
-  }
-
-  .progress {
-    margin-top: 15px;
-    text-align:center;
-    color:#999;
-    font-size:14px;
-  }
-  footer {
-    margin-top:25px;
-    color: var(--muted);
-    font-size:13px;
+  .bottom-nav {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    width:90%;
+    max-width:400px;
+    margin-top:20px;
   }
 </style>
 </head>
 <body>
   <h1>🌷 瞬間英作文カード</h1>
+  <div class="progress" id="progress"></div>
 
-  <div class="card-container">
-    <div class="card" id="card">
-      <!-- 表面 -->
-      <div class="card-face front">
-        <div class="jp" id="jpText"></div>
-
-        <div class="controls">
-          <button id="playAudio" class="btn-main">▶ 再生</button>
-          <select id="voiceSelect"></select>
-          <button id="flipBtn" class="btn-sub">💬 解答を見る</button>
-          <button id="rememberBtn" class="btn-main">覚えた💡</button>
-          <button id="forgetBtn" class="btn-sub">覚えていない🙈</button>
-          <button id="nextBtn" class="btn-sub">次のカード ▶</button>
-          <button id="toggleMode" class="btn-sub">🙈 復習モードに切り替え</button>
-        </div>
-      </div>
-
-      <!-- 裏面 -->
-      <div class="card-face back">
-        <div class="en" id="enText"></div>
-      </div>
+  <div class="card" id="card">
+    <div class="jp" id="jpText"></div>
+    <div class="en" id="enText" style="display:none;"></div>
+    <div class="controls" id="controls">
+      <button id="flipBtn" class="btn-pink">💬 解答を見る</button>
+      <button id="playAudio" class="btn-blue" style="display:none;">▶ 再生</button>
+      <select id="speedSelect" style="display:none;">
+        <option value="0.8">0.8×</option>
+        <option value="1.0" selected>1.0×</option>
+        <option value="1.2">1.2×</option>
+      </select>
     </div>
   </div>
 
-  <div class="progress" id="progress"></div>
-  <footer>✨ Made with love — EIMARI ✨</footer>
+  <div class="bottom-nav">
+    <button id="prevBtn" class="btn-yellow">⬅</button>
+    <button id="replayBtn" class="btn-pink">↻ もう一度</button>
+    <button id="nextBtn" class="btn-blue">➡</button>
+  </div>
 
 <script>
 let cards = [];
 let cur = 0;
+let voices = [];
 let learned = JSON.parse(localStorage.getItem('learnedCards') || '{}');
-let reviewMode = JSON.parse(localStorage.getItem('reviewMode') || 'false');
-
-const jpText = document.getElementById('jpText');
-const enText = document.getElementById('enText');
-const nextBtn = document.getElementById('nextBtn');
-const playAudioBtn = document.getElementById('playAudio');
-const rememberBtn = document.getElementById('rememberBtn');
-const forgetBtn = document.getElementById('forgetBtn');
-const flipBtn = document.getElementById('flipBtn');
-const progress = document.getElementById('progress');
-const card = document.getElementById('card');
-const voiceSelect = document.getElementById('voiceSelect');
-const toggleModeBtn = document.getElementById('toggleMode');
-
-function updateProgress(){
-  const total = cards.length;
-  const learnedCount = Object.keys(learned).length;
-  progress.textContent = `進捗：${learnedCount} / ${total} 枚`;
-}
-
-function saveProgress(){
-  localStorage.setItem('learnedCards', JSON.stringify(learned));
-  updateProgress();
-}
 
 async function loadCards(){
   const res = await fetch('cards.json');
@@ -184,89 +120,62 @@ async function loadCards(){
   showCard();
   updateProgress();
   loadVoices();
-  updateModeButton();
 }
-
-function getActiveCards() {
-  if (!reviewMode) return cards;
-  return cards.filter(c => !learned[c.ModelEN]);
+function updateProgress(){
+  document.getElementById('progress').textContent = `${cur+1}/${cards.length}`;
 }
-
 function showCard(){
-  const activeCards = getActiveCards();
-  if(activeCards.length === 0){
-    jpText.textContent = reviewMode ? "🎉 復習完了！全て覚えました！" : "カードがありません。";
-    enText.textContent = "";
-    return;
-  }
-  const c = activeCards[cur % activeCards.length];
-  jpText.textContent = c.JP;
-  enText.textContent = c.ModelEN;
-  card.classList.remove('flip');
+  const jp = document.getElementById('jpText');
+  const en = document.getElementById('enText');
+  jp.textContent = cards[cur].JP;
+  en.textContent = cards[cur].ModelEN;
+  jp.style.display = 'block';
+  en.style.display = 'none';
+  document.getElementById('flipBtn').style.display='inline-block';
+  document.getElementById('playAudio').style.display='none';
+  document.getElementById('speedSelect').style.display='none';
 }
 
-nextBtn.onclick = ()=>{
-  cur++;
+document.getElementById('flipBtn').onclick = ()=>{
+  document.getElementById('jpText').style.display='none';
+  document.getElementById('enText').style.display='block';
+  document.getElementById('flipBtn').style.display='none';
+  document.getElementById('playAudio').style.display='inline-block';
+  document.getElementById('speedSelect').style.display='inline-block';
+};
+
+document.getElementById('nextBtn').onclick = ()=>{
+  cur = (cur + 1) % cards.length;
   showCard();
+  updateProgress();
 };
-
-rememberBtn.onclick = ()=>{
-  const c = getActiveCards()[cur % getActiveCards().length];
-  learned[c.ModelEN] = true;
-  saveProgress();
-  nextBtn.click();
-};
-
-forgetBtn.onclick = ()=>{
-  const c = getActiveCards()[cur % getActiveCards().length];
-  delete learned[c.ModelEN];
-  saveProgress();
-  nextBtn.click();
-};
-
-flipBtn.onclick = ()=>{
-  card.classList.toggle('flip');
-};
-
-// ==== 復習モード切り替え ====
-function updateModeButton(){
-  toggleModeBtn.textContent = reviewMode ? "📚 全カードに戻す" : "🙈 復習モードに切り替え";
-}
-toggleModeBtn.onclick = ()=>{
-  reviewMode = !reviewMode;
-  localStorage.setItem('reviewMode', JSON.stringify(reviewMode));
-  cur = 0;
-  updateModeButton();
+document.getElementById('prevBtn').onclick = ()=>{
+  cur = (cur - 1 + cards.length) % cards.length;
   showCard();
+  updateProgress();
 };
 
-// ==== TTS ====
-let voices = [];
-function loadVoices() {
+function loadVoices(){
   voices = speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
-  if (voices.length === 0) return;
-  voiceSelect.innerHTML = voices.map(v => 
-    `<option value="${v.name}">${v.name} (${v.lang})</option>`
-  ).join('');
 }
 speechSynthesis.onvoiceschanged = loadVoices;
 
-function speak(text){
-  if(!('speechSynthesis' in window)){
-    alert('SpeechSynthesis未対応ブラウザです');
-    return;
-  }
+function speak(text, rate=1){
   const u = new SpeechSynthesisUtterance(text);
-  const selectedName = voiceSelect.value;
-  const voice = voices.find(v => v.name === selectedName);
+  u.rate = rate;
+  const voice = voices.find(v => v.lang.includes('US')) || voices[0];
   if(voice) u.voice = voice;
-  u.rate = 1;
   speechSynthesis.cancel();
   speechSynthesis.speak(u);
 }
-playAudioBtn.onclick = ()=>{
-  const c = getActiveCards()[cur % getActiveCards().length];
-  speak(c.ModelEN);
+
+document.getElementById('playAudio').onclick = ()=>{
+  const rate = parseFloat(document.getElementById('speedSelect').value);
+  speak(cards[cur].ModelEN, rate);
+};
+document.getElementById('replayBtn').onclick = ()=>{
+  const rate = parseFloat(document.getElementById('speedSelect').value || 1);
+  speak(cards[cur].ModelEN, rate);
 };
 
 loadCards();

@@ -34,7 +34,7 @@ h1 {
 
 .card {
   width: 320px;
-  height: 220px;
+  height: 240px;
   position: relative;
   transform-style: preserve-3d;
   transition: transform 0.6s;
@@ -53,6 +53,7 @@ h1 {
   border-radius: 20px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   backface-visibility: hidden;
@@ -63,10 +64,9 @@ h1 {
 
 .card-back {
   transform: rotateY(180deg);
-  flex-direction: column;
 }
 
-.controls {
+.controls, .memory-btns {
   margin-top: 10px;
   display: flex;
   gap: 8px;
@@ -86,6 +86,7 @@ button, select {
 .btn-pink { background: #f06292; color: #fff; }
 .btn-yellow { background: #fbc02d; color: #fff; }
 .btn-blue { background: #4fc3f7; color: #fff; }
+.btn-gray { background: #e0e0e0; color: #555; }
 
 .btn-pink:hover { background: #ec407a; }
 
@@ -93,7 +94,15 @@ button, select {
   margin-top: 25px;
   display: flex;
   justify-content: space-between;
-  width: 300px;
+  width: 320px;
+}
+
+.mode-toggle {
+  margin-top: 15px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 </style>
 </head>
@@ -115,14 +124,23 @@ button, select {
           <option value="1.2">1.2×</option>
         </select>
       </div>
+      <div class="memory-btns">
+        <button id="rememberBtn" class="btn-pink">覚えた！</button>
+        <button id="notRememberBtn" class="btn-gray">まだ覚えてない</button>
+      </div>
     </div>
   </div>
 </div>
 
 <div class="bottom-nav">
   <button id="prevBtn" class="btn-yellow">⬅</button>
-  <button id="replayBtn" class="btn-pink">↻ もう一度</button>
+  <button id="replayBtn" class="btn-pink">↻</button>
   <button id="nextBtn" class="btn-blue">➡</button>
+</div>
+
+<div class="mode-toggle">
+  <input type="checkbox" id="unlearnedMode" />
+  <label for="unlearnedMode">覚えていないモード</label>
 </div>
 
 <script>
@@ -132,20 +150,16 @@ const enText = document.getElementById('enText');
 const playAudio = document.getElementById('playAudio');
 const speedSelect = document.getElementById('speedSelect');
 const progress = document.getElementById('progress');
+const rememberBtn = document.getElementById('rememberBtn');
+const notRememberBtn = document.getElementById('notRememberBtn');
+const unlearnedMode = document.getElementById('unlearnedMode');
 
 let cards = [];
 let cur = 0;
+let learnedStatus = {}; // {index: true/false}
+let unlearnedOnly = false;
 
-// 🎴 カード表示更新
-function updateCard() {
-  const item = cards[cur];
-  jpText.textContent = item.JP;
-  enText.textContent = item.ModelEN;
-  progress.textContent = `${cur + 1}/${cards.length}`;
-  card.classList.remove('flipped');
-}
-
-// 🎧 音声合成
+// 🎧 音声
 function speak(text, rate = 1) {
   const u = new SpeechSynthesisUtterance(text);
   u.lang = 'en-US';
@@ -154,25 +168,36 @@ function speak(text, rate = 1) {
   speechSynthesis.speak(u);
 }
 
-// 📦 JSON読込
+// 🎴 表示更新
+function updateCard() {
+  if (!cards.length) return;
+  const item = cards[cur];
+  jpText.textContent = item.JP;
+  enText.textContent = item.ModelEN;
+  progress.textContent = `${cur + 1}/${cards.length}`;
+  card.classList.remove('flipped');
+}
+
+// 📦 JSON読み込み
 async function loadCards() {
   try {
     const res = await fetch('cards.json');
     cards = await res.json();
+    const saved = JSON.parse(localStorage.getItem('learnedStatus'));
+    if (saved) learnedStatus = saved;
     updateCard();
-  } catch (err) {
+  } catch {
     progress.textContent = 'カードデータを読み込めませんでした。';
   }
 }
 
-// 📍 イベント
+// 📍 操作
 card.addEventListener('click', () => {
   card.classList.toggle('flipped');
 });
 
 document.getElementById('nextBtn').onclick = () => {
-  cur = (cur + 1) % cards.length;
-  updateCard();
+  nextCard();
 };
 
 document.getElementById('prevBtn').onclick = () => {
@@ -180,13 +205,50 @@ document.getElementById('prevBtn').onclick = () => {
   updateCard();
 };
 
+document.getElementById('replayBtn').onclick = () => {
+  speak(cards[cur].ModelEN, parseFloat(speedSelect.value));
+};
+
 playAudio.onclick = () => {
   speak(cards[cur].ModelEN, parseFloat(speedSelect.value));
 };
 
-document.getElementById('replayBtn').onclick = () => {
-  speak(cards[cur].ModelEN, parseFloat(speedSelect.value));
+// 📘 覚えた管理
+rememberBtn.onclick = () => {
+  learnedStatus[cur] = true;
+  localStorage.setItem('learnedStatus', JSON.stringify(learnedStatus));
+  nextCard();
 };
+
+notRememberBtn.onclick = () => {
+  learnedStatus[cur] = false;
+  localStorage.setItem('learnedStatus', JSON.stringify(learnedStatus));
+  nextCard();
+};
+
+// ⏩ 次のカード
+function nextCard() {
+  if (unlearnedOnly) {
+    const unlearnedIndexes = cards.map((_, i) => i).filter(i => !learnedStatus[i]);
+    if (unlearnedIndexes.length === 0) {
+      alert('すべて覚えました🎉');
+      return;
+    }
+    const currentIndex = unlearnedIndexes.indexOf(cur);
+    const nextIndex = (currentIndex + 1) % unlearnedIndexes.length;
+    cur = unlearnedIndexes[nextIndex];
+  } else {
+    cur = (cur + 1) % cards.length;
+  }
+  updateCard();
+}
+
+// 🎛 モード切替
+unlearnedMode.addEventListener('change', () => {
+  unlearnedOnly = unlearnedMode.checked;
+  cur = 0;
+  updateCard();
+});
 
 loadCards();
 </script>

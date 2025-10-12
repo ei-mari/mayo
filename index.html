@@ -32,7 +32,6 @@
     margin:10px 0 20px;
   }
 
-  /* --- CARD --- */
   .card-container {
     width: 100%;
     max-width: 420px;
@@ -40,51 +39,42 @@
   }
   .card {
     width: 100%;
-    background: var(--surface);
     border-radius: 18px;
     box-shadow: var(--shadow);
     transition: transform 0.6s;
     transform-style: preserve-3d;
     cursor: pointer;
     position: relative;
-    overflow: hidden;
+    background: var(--surface);
   }
   .card.flip { transform: rotateY(180deg); }
 
   .card-face {
+    border-radius: 18px;
     padding: 28px 20px;
     text-align: center;
     min-height: 320px;
-    border-radius: 18px;
     backface-visibility: hidden;
     display:flex;
     flex-direction:column;
     justify-content:space-between;
     align-items:center;
-  }
-  .card-face.back {
     position: absolute;
+    width: 100%;
     top: 0;
     left: 0;
+  }
+  .card-face.back {
     transform: rotateY(180deg);
-    width: 100%;
-    height: 100%;
-    background: var(--surface);
-    border-radius: 18px;
-    box-shadow: var(--shadow);
   }
 
-  .jp {
+  .jp, .en {
     font-size: 20px;
     color: var(--text);
     font-weight:500;
     margin-top:20px;
   }
-  .en {
-    font-size: 22px;
-    color:#444;
-    margin-top:20px;
-  }
+  .en { font-size: 22px; color:#444; }
 
   .controls {
     margin-top: 20px;
@@ -134,17 +124,21 @@
 
   <div class="card-container">
     <div class="card" id="card">
+      <!-- 表面 -->
       <div class="card-face front">
         <div class="jp" id="jpText"></div>
+
         <div class="controls">
-          <select id="voiceSelect"></select>
           <button id="playAudio" class="btn-main">▶ 再生</button>
+          <select id="voiceSelect"></select>
           <button id="flipBtn" class="btn-sub">💬 解答を見る</button>
           <button id="rememberBtn" class="btn-main">覚えた💡</button>
           <button id="forgetBtn" class="btn-sub">覚えていない🙈</button>
           <button id="nextBtn" class="btn-sub">次のカード ▶</button>
         </div>
       </div>
+
+      <!-- 裏面 -->
       <div class="card-face back">
         <div class="en" id="enText"></div>
       </div>
@@ -222,6 +216,7 @@ let voices = [];
 
 function loadVoices() {
   voices = speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
+  if (voices.length === 0) return;
   voiceSelect.innerHTML = voices.map(v => 
     `<option value="${v.name}">${v.name} (${v.lang})</option>`
   ).join('');

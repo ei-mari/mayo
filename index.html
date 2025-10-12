@@ -135,6 +135,7 @@
           <button id="rememberBtn" class="btn-main">覚えた💡</button>
           <button id="forgetBtn" class="btn-sub">覚えていない🙈</button>
           <button id="nextBtn" class="btn-sub">次のカード ▶</button>
+          <button id="toggleMode" class="btn-sub">🙈 復習モードに切り替え</button>
         </div>
       </div>
 
@@ -152,6 +153,8 @@
 let cards = [];
 let cur = 0;
 let learned = JSON.parse(localStorage.getItem('learnedCards') || '{}');
+let reviewMode = JSON.parse(localStorage.getItem('reviewMode') || 'false');
+
 const jpText = document.getElementById('jpText');
 const enText = document.getElementById('enText');
 const nextBtn = document.getElementById('nextBtn');
@@ -162,6 +165,7 @@ const flipBtn = document.getElementById('flipBtn');
 const progress = document.getElementById('progress');
 const card = document.getElementById('card');
 const voiceSelect = document.getElementById('voiceSelect');
+const toggleModeBtn = document.getElementById('toggleMode');
 
 function updateProgress(){
   const total = cards.length;
@@ -180,29 +184,42 @@ async function loadCards(){
   showCard();
   updateProgress();
   loadVoices();
+  updateModeButton();
+}
+
+function getActiveCards() {
+  if (!reviewMode) return cards;
+  return cards.filter(c => !learned[c.ModelEN]);
 }
 
 function showCard(){
-  if(cards.length===0) return;
-  const c = cards[cur];
+  const activeCards = getActiveCards();
+  if(activeCards.length === 0){
+    jpText.textContent = reviewMode ? "🎉 復習完了！全て覚えました！" : "カードがありません。";
+    enText.textContent = "";
+    return;
+  }
+  const c = activeCards[cur % activeCards.length];
   jpText.textContent = c.JP;
   enText.textContent = c.ModelEN;
   card.classList.remove('flip');
 }
 
 nextBtn.onclick = ()=>{
-  cur = (cur + 1) % cards.length;
+  cur++;
   showCard();
 };
 
 rememberBtn.onclick = ()=>{
-  learned[cards[cur].ModelEN] = true;
+  const c = getActiveCards()[cur % getActiveCards().length];
+  learned[c.ModelEN] = true;
   saveProgress();
   nextBtn.click();
 };
 
 forgetBtn.onclick = ()=>{
-  delete learned[cards[cur].ModelEN];
+  const c = getActiveCards()[cur % getActiveCards().length];
+  delete learned[c.ModelEN];
   saveProgress();
   nextBtn.click();
 };
@@ -211,9 +228,20 @@ flipBtn.onclick = ()=>{
   card.classList.toggle('flip');
 };
 
+// ==== 復習モード切り替え ====
+function updateModeButton(){
+  toggleModeBtn.textContent = reviewMode ? "📚 全カードに戻す" : "🙈 復習モードに切り替え";
+}
+toggleModeBtn.onclick = ()=>{
+  reviewMode = !reviewMode;
+  localStorage.setItem('reviewMode', JSON.stringify(reviewMode));
+  cur = 0;
+  updateModeButton();
+  showCard();
+};
+
 // ==== TTS ====
 let voices = [];
-
 function loadVoices() {
   voices = speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
   if (voices.length === 0) return;
@@ -236,9 +264,8 @@ function speak(text){
   speechSynthesis.cancel();
   speechSynthesis.speak(u);
 }
-
 playAudioBtn.onclick = ()=>{
-  const c = cards[cur];
+  const c = getActiveCards()[cur % getActiveCards().length];
   speak(c.ModelEN);
 };
 

@@ -15,7 +15,6 @@ body {
   justify-content: center;
   min-height: 100vh;
   color: #333;
-  overflow-x: hidden;
 }
 
 h1 {
@@ -37,8 +36,8 @@ h1 {
 }
 
 .card {
-  width: 320px;
-  height: 240px;
+  width: 340px;
+  height: 260px;
   position: relative;
   transform-style: preserve-3d;
   transition: transform 0.6s;
@@ -68,20 +67,30 @@ h1 {
 
 .card-back {
   transform: rotateY(180deg);
+  justify-content: space-between;
+  padding: 20px 15px;
 }
 
-.controls, .memory-btns {
-  margin-top: 10px;
+.controls {
   display: flex;
-  gap: 8px;
   justify-content: center;
   align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.memory-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 5px;
 }
 
 button, select {
   border: none;
   border-radius: 25px;
-  padding: 10px 16px;
+  padding: 9px 14px;
   font-size: 14px;
   cursor: pointer;
   transition: 0.2s;
@@ -92,7 +101,6 @@ button, select {
 .btn-yellow { background: #fbc02d; color: #fff; }
 .btn-blue { background: #4fc3f7; color: #fff; }
 .btn-gray { background: #e0e0e0; color: #555; }
-
 .btn-pink:hover { background: #ec407a; }
 
 .bottom-nav {
@@ -131,7 +139,7 @@ button, select {
           <option value="1.2">1.2×</option>
         </select>
       </div>
-      <div class="memory-btns">
+      <div class="memory-row">
         <button id="rememberBtn" class="btn-pink">覚えた！</button>
         <button id="notRememberBtn" class="btn-gray">まだ覚えてない</button>
       </div>

@@ -12,24 +12,28 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-height: 100vh;
   justify-content: center;
+  min-height: 100vh;
   color: #333;
+  overflow-x: hidden;
 }
 
 h1 {
   font-size: 1.3rem;
   color: #f06292;
-  margin-bottom: 20px;
+  margin: 40px 0 15px;
 }
 
 .progress {
   color: #999;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
 }
 
 .card-container {
   perspective: 1000px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .card {
@@ -77,10 +81,11 @@ h1 {
 button, select {
   border: none;
   border-radius: 25px;
-  padding: 8px 14px;
+  padding: 10px 16px;
   font-size: 14px;
   cursor: pointer;
   transition: 0.2s;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
 }
 
 .btn-pink { background: #f06292; color: #fff; }
@@ -91,18 +96,20 @@ button, select {
 .btn-pink:hover { background: #ec407a; }
 
 .bottom-nav {
-  margin-top: 25px;
+  margin-top: 30px;
   display: flex;
-  justify-content: space-between;
-  width: 320px;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
 }
 
 .mode-toggle {
-  margin-top: 15px;
+  margin-top: 20px;
   font-size: 14px;
   display: flex;
   align-items: center;
   gap: 8px;
+  justify-content: center;
 }
 </style>
 </head>
@@ -134,7 +141,7 @@ button, select {
 
 <div class="bottom-nav">
   <button id="prevBtn" class="btn-yellow">⬅</button>
-  <button id="replayBtn" class="btn-pink">↻</button>
+  <button id="replayBtn" class="btn-pink">↻ もう一度</button>
   <button id="nextBtn" class="btn-blue">➡</button>
 </div>
 
@@ -156,10 +163,10 @@ const unlearnedMode = document.getElementById('unlearnedMode');
 
 let cards = [];
 let cur = 0;
-let learnedStatus = {}; // {index: true/false}
+let learnedStatus = {}; 
 let unlearnedOnly = false;
 
-// 🎧 音声
+// 🎧 TTS
 function speak(text, rate = 1) {
   const u = new SpeechSynthesisUtterance(text);
   u.lang = 'en-US';
@@ -178,7 +185,7 @@ function updateCard() {
   card.classList.remove('flipped');
 }
 
-// 📦 JSON読み込み
+// 📦 JSON読込
 async function loadCards() {
   try {
     const res = await fetch('cards.json');
@@ -191,7 +198,7 @@ async function loadCards() {
   }
 }
 
-// 📍 操作
+// 📍 イベント
 card.addEventListener('click', () => {
   card.classList.toggle('flipped');
 });
@@ -213,7 +220,7 @@ playAudio.onclick = () => {
   speak(cards[cur].ModelEN, parseFloat(speedSelect.value));
 };
 
-// 📘 覚えた管理
+// 📘 覚えた／覚えてない
 rememberBtn.onclick = () => {
   learnedStatus[cur] = true;
   localStorage.setItem('learnedStatus', JSON.stringify(learnedStatus));

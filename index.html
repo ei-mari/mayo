@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>瞬間英作文 Drill — JP→EN / Image→EN</title>
+<style>
+  :root{
+    --bg:#0b0c10; --panel:#101317; --card:#0f151a; --muted:#9fb0c8; --ink:#eaf1ff;
+    --accent:#4da3ff; --ok:#22c55e; --bad:#ef4444; --br:12px; --shadow:0 10px 30px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box}
+  body{margin:0; font-family: system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP",Helvetica,Arial; background:linear-gradient(180deg,#071019,#0b0f15); color:var(--ink); min-height:100vh; display:flex; align-items:flex-start; justify-content:center; padding:20px;}
+  .wrap{width:100%; max-width:980px;}
+  header{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:14px}
+  .title{font-weight:700;font-size:18px}
+  .muted{color:var(--muted); font-size:13px}
+  .panel{background:var(--panel); border-radius:14px; padding:16px; box-shadow:var(--shadow); border:1px solid rgba(255,255,255,.02)}
+  .controls{display:flex;gap:8px;flex-wrap:wrap}
+  button{border:0;padding:8px 12px;border-radius:10px;background:#0d1620;color:var(--ink);cursor:pointer;font-weight:600}
+  button.ghost{background:transparent;border:1px solid rgba(255,255,255,.04)}
+  .topbar{display:flex;gap:10px;align-items:center}
+  .card{display:flex;gap:18px;align-items:flex-start}
+  .left{flex:1;min-width:240px}
+  .jp{font-size:20px;line-height:1.6;margin-bottom:10px}
+  .image-frame{width:320px;max-width:40vw;background:#fff;padding:8px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+  .image-frame img{display:block;width:100%;height:100%;object-fit:cover;border-radius:6px}
+  .audioBtn{display:inline-flex;gap:8px;align-items:center;background:linear-gradient(90deg,var(--accent),#22c55e);color:#021019;padding:8px 12px;border-radius:10px;font-weight:700;border:0}
+  .small{font-size:13px;color:var(--muted)}
+  .back{margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.03)}
+  .en{font-size:20px;color:#f2fbff}
+  .variants{font-size:14px;color:var(--muted);margin-top:8px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .chip{background:#071826;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.03);font-size:13px;color:var(--muted)}
+  .grade{display:flex;gap:8px;margin-top:12px}
+  .grade button{flex:1;padding:10px 8px;border-radius:10px}
+  .again{background:var(--bad)}
+  .learned{background:var(--ok)}
+  .nextrow{display:flex;gap:8px;margin-top:12px}
+  .footer{margin-top:12px;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+  .tog{display:inline-flex;align-items:center;gap:8px;background:#07131a;padding:6px 10px;border-radius:999px}
+  input[type=file]{display:none}
+  .filelabel{cursor:pointer;padding:8px 10px;border-radius:8px;border:1px dashed rgba(255,255,255,.03);background:transparent;color:var(--muted)}
+  .counter{font-weight:700}
+  @media(max-width:720px){
+    .card{flex-direction:column}
+    .image-frame{max-width:100%}
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <div class="title">⚡ 瞬間英作文 Drill — JP→EN / Image→EN</div>
+        <div class="muted small">タップで音声再生・裏を見て覚えた/覚えていない を記録</div>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="topbar panel" style="padding:8px 10px">
+          <div class="muted small">Due: <span id="due">0</span></div>
+          <div style="width:1px;height:22px;background:rgba(255,255,255,.02);margin:0 8px"></div>
+          <div class="muted small">Total: <span id="total">0</span></div>
+        </div>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <div class="controls">
+          <button id="prevBtn" class="ghost">◀ Prev</button>
+          <button id="nextBtn" class="ghost">Next ▶</button>
+          <button id="revealBtn" class="ghost">解答を表示</button>
+          <button id="shuffleBtn" class="ghost">Shuffle</button>
+          <label title="未学習だけ表示モード (On/Off)"><span class="tog"><input type="checkbox" id="filterToggle"> 未学習のみ</span></label>
+        </div>
+
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+          <label class="filelabel" title="cards.json をアップロード"><input id="fileInput" type="file" accept=".json">Upload JSON</label>
+          <button id="resetProgress" class="ghost">Reset progress</button>
+          <button id="exportProgress" class="ghost">Export progress</button>
+        </div>
+      </div>
+
+      <div style="height:14px"></div>
+
+      <div class="card">
+        <div class="left">
+          <div class="panel" style="padding:16px">
+            <div class="jp" id="jpText">読み込み中…</div>
+            <div class="chips" id="chips"></div>
+            <div style="height:10px"></div>
+            <div id="imageWrap"></div>
+
+            <div style="height:12px"></div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <button id="playAudio" class="audioBtn" aria-live="polite">▶ Play audio</button>
+              <div class="small muted" id="audioLabel">Audio: —</div>
+            </div>
+
+            <div class="back" id="backArea" style="display:none">
+              <div class="label small muted">Model answer</div>
+              <div class="en" id="enText"></div>
+              <div class="variants" id="variants"></div>
+              <div class="small muted" id="ipaArea"></div>
+              <div class="grade">
+                <button id="markUnlearned" class="again">覚えていない</button>
+                <button id="markLearned" class="learned">覚えた</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="width:300px;max-width:38vw">
+          <div class="panel" style="padding:14px">
+            <div class="small muted">カード操作</div>
+            <div style="height:8px"></div>
+            <div style="display:flex;gap:8px">
+              <button id="onlyUnlearnedBtn" class="ghost">未学習のみ表示</button>
+              <button id="showAllBtn" class="ghost">全て表示</button>
+            </div>
+
+            <div style="height:12px"></div>
+            <div class="small muted">状態</div>
+            <div style="height:8px"></div>
+            <div id="statusArea" class="small muted">—</div>
+
+            <div style="height:12px"></div>
+            <div class="small muted">カード順</div>
+            <div style="height:8px"></div>
+            <div style="display:flex;gap:6px">
+              <button id="sortNew" class="ghost">Newest</button>
+              <button id="sortShuffle" class="ghost">Shuffle</button>
+            </div>
+
+            <div style="height:12px"></div>
+            <div class="small muted">インポート / エクスポート</div>
+            <div style="height:8px"></div>
+            <div class="small muted">cards.json をリポジトリに置けば自動で読み込みます。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="small muted">* cards.json を編集してカードを追加してください（配列）</div>
+        <div class="small muted">Local progress stored in browser (localStorage)</div>
+      </div>
+    </section>
+  </div>
+
+<script>
+/*
+ Behavior:
+ - expects ./cards.json (same folder) — but you can Upload JSON (file input)
+ - localStorage key: "jpdrill_status" -> object { id: 'learned'|'unlearned' }
+ - Filter toggle shows only unlearned
+*/
+
+let cards = [];
+let indexList = []; // indices after filtering/sort
+let curPos = 0;
+let statusMap = JSON.parse(localStorage.getItem('jpdrill_status') || '{}');
+const jpText = document.getElementById('jpText');
+const chips = document.getElementById('chips');
+const imageWrap = document.getElementById('imageWrap');
+const audioLabel = document.getElementById('audioLabel');
+const playAudioBtn = document.getElementById('playAudio');
+const enText = document.getElementById('enText');
+const variants = document.getElementById('variants');
+const backArea = document.getElementById('backArea');
+const dueElem = document.getElementById('due');
+const totalElem = document.getElementById('total');
+const statusArea = document.getElementById('statusArea');
+const fileInput = document.getElementById('fileInput');
+
+let audioEl = null;
+let onlyUnlearnedMode = false;
+
+async function loadCardsFromFile(path='cards.json'){
+  try{
+    const resp = await fetch(path, {cache: "no-store"});
+    if(!resp.ok) throw new Error('not found');
+    cards = await resp.json();
+    prepareList();
+  }catch(err){
+    console.warn('Fetch failed:', err);
+    // keep cards empty; user can upload
+    cards = [];
+    prepareList();
+  }
+}
+
+function prepareList(){
+  totalElem.textContent = cards.length;
+  // by default: order as-is
+  indexList = cards.map((c,i)=>i);
+  applyFilterAndRender();
+}
+
+function applyFilterAndRender(){
+  if(onlyUnlearnedMode){
+    indexList = cards.map((c,i)=>i).filter(i => (statusMap[cards[i].id] !== 'learned'));
+  } else {
+    indexList = cards.map((c,i)=>i);
+  }
+  if(indexList.length === 0){
+    curPos = 0;
+    renderEmpty();
+    return;
+  }
+  if(curPos >= indexList.length) curPos = 0;
+  updateCounters();
+  renderCard();
+}
+
+function renderEmpty(){
+  jpText.textContent = 'カードがありません。cards.json をアップロードするか、リポジトリに追加してください。';
+  chips.innerHTML = '';
+  imageWrap.innerHTML = '';
+  audioLabel.textContent = 'Audio: —';
+  backArea.style.display = 'none';
+  statusArea.textContent = '—';
+  dueElem.textContent = 0;
+}
+
+function renderCard(){
+  const idx = indexList[curPos];
+  const card = cards[idx];
+  if(!card) return renderEmpty();
+  jpText.textContent = card.JP || '（日本語がありません）';
+  // chips
+  chips.innerHTML = '';
+  if(card.KeyChunks){
+    const arr = (card.KeyChunks||'').split(';').map(s=>s.trim()).filter(Boolean);
+    arr.forEach(ch => {
+      const sp = document.createElement('span'); sp.className='chip'; sp.textContent = ch; chips.appendChild(sp);
+    });
+  }
+  if(card.Level){
+    const sp = document.createElement('span'); sp.className='chip'; sp.textContent='Level: '+card.Level; chips.appendChild(sp);
+  }
+
+  // image
+  if(card.Image){
+    imageWrap.innerHTML = `<div class="image-frame"><img src="${card.Image}" alt="Image"></div>`;
+  } else {
+    imageWrap.innerHTML = '';
+  }
+
+  // audio
+  if(card.Audio){
+    audioLabel.textContent = 'Audio: available';
+    playAudioBtn.disabled = false;
+    if(audioEl){ audioEl.pause(); audioEl.src=''; audioEl = null; }
+    audioEl = new Audio(card.Audio);
+    audioEl.preload = 'none';
+  } else {
+    audioLabel.textContent = 'Audio: —';
+    playAudioBtn.disabled = true;
+    if(audioEl){ audioEl.pause(); audioEl = null; }
+  }
+
+  // hide back
+  backArea.style.display = 'none';
+  enText.textContent = '';
+  variants.textContent = '';
+  // status
+  const st = statusMap[card.id] || 'unseen';
+  statusArea.textContent = 'Status: ' + st;
+  updateCounters();
+}
+
+function updateCounters(){
+  const total = cards.length;
+  const learned = Object.values(statusMap).filter(v=>v==='learned').length;
+  const unlearned = total - learned;
+  totalElem.textContent = total;
+  dueElem.textContent = unlearned;
+}
+
+document.getElementById('nextBtn').addEventListener('click', ()=>{
+  if(indexList.length===0) return;
+  curPos = (curPos+1) % indexList.length;
+  renderCard();
+});
+document.getElementById('prevBtn').addEventListener('click', ()=>{
+  if(indexList.length===0) return;
+  curPos = (curPos-1+indexList.length) % indexList.length;
+  renderCard();
+});
+
+document.getElementById('revealBtn').addEventListener('click', ()=>{
+  const idx = indexList[curPos];
+  const card = cards[idx];
+  if(!card) return;
+  backArea.style.display = 'block';
+  enText.textContent = card.ModelEN || '（英語がありません）';
+  variants.textContent = card.Variants ? 'Alt: ' + card.Variants : '';
+  if(card.IPA) document.getElementById('ipaArea').textContent = 'IPA: '+card.IPA; else document.getElementById('ipaArea').textContent='';
+});
+
+playAudioBtn.addEventListener('click', () => {
+  if(!audioEl) return;
+  audioEl.currentTime = 0;
+  audioEl.play().catch(()=>{ alert('Playback blocked by browser — tap to allow'); });
+});
+
+document.getElementById('markLearned').addEventListener('click', ()=>{
+  markStatus('learned');
+});
+document.getElementById('markUnlearned').addEventListener('click', ()=>{
+  markStatus('unlearned');
+});
+
+function markStatus(st){
+  const idx = indexList[curPos];
+  const card = cards[idx];
+  if(!card) return;
+  statusMap[card.id] = st;
+  localStorage.setItem('jpdrill_status', JSON.stringify(statusMap));
+  // auto-advance when learned
+  if(st === 'learned'){
+    // remove from list if filter on
+    if(onlyUnlearnedMode){
+      indexList = indexList.filter(i => cards[i].id !== card.id);
+      if(curPos >= indexList.length) curPos = 0;
+      if(indexList.length === 0) { renderEmpty(); updateCounters(); return; }
+    } else {
+      curPos = (curPos+1) % indexList.length;
+    }
+  }
+  updateCounters();
+  renderCard();
+}
+
+document.getElementById('filterToggle').addEventListener('change', (e)=>{
+  onlyUnlearnedMode = e.target.checked;
+  applyFilterAndRender();
+});
+
+document.getElementById('shuffleBtn').addEventListener('click', ()=>{
+  // Fisher-Yates shuffle indexList
+  for(let i=indexList.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [indexList[i], indexList[j]] = [indexList[j], indexList[i]];
+  }
+  curPos = 0;
+  renderCard();
+});
+
+document.getElementById('onlyUnlearnedBtn').addEventListener('click', ()=>{
+  onlyUnlearnedMode = true;
+  document.getElementById('filterToggle').checked = true;
+  applyFilterAndRender();
+});
+document.getElementById('showAllBtn').addEventListener('click', ()=>{
+  onlyUnlearnedMode = false;
+  document.getElementById('filterToggle').checked = false;
+  applyFilterAndRender();
+});
+document.getElementById('sortNew').addEventListener('click', ()=>{
+  // assume cards in file order are newest-first; keep as-is
+  indexList = cards.map((c,i)=>i);
+  curPos = 0; renderCard();
+});
+document.getElementById('sortShuffle').addEventListener('click', ()=>{
+  indexList = cards.map((c,i)=>i);
+  for(let i=indexList.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [indexList[i],indexList[j]]=[indexList[j],indexList[i]]; }
+  curPos = 0; renderCard();
+});
+
+document.getElementById('resetProgress').addEventListener('click', ()=>{
+  if(!confirm('Progress will be reset locally. OK?')) return;
+  statusMap = {};
+  localStorage.setItem('jpdrill_status', JSON.stringify(statusMap));
+  updateCounters();
+  renderCard();
+});
+
+document.getElementById('exportProgress').addEventListener('click', ()=>{
+  const blob = new Blob([JSON.stringify(statusMap,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'progress.json'; a.click();
+  URL.revokeObjectURL(url);
+});
+
+fileInput.addEventListener('change', (ev)=>{
+  const f = ev.target.files[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      const data = JSON.parse(e.target.result);
+      if(Array.isArray(data)){
+        cards = data;
+        prepareList();
+        alert('cards.json loaded from file (temporary, not saved to repo). To persist, add to repo.');
+      } else alert('Invalid JSON format: expected array of cards');
+    }catch(err){ alert('JSON parse error: '+err.message) }
+  };
+  reader.readAsText(f);
+});
+
+// initial load
+loadCardsFromFile();
+
+// expose a small helper so devs can update localStorage easily
+window.jpdrill = {
+  getCards: ()=>cards,
+  getStatus: ()=>statusMap,
+  setStatus: (id,s)=>{ statusMap[id]=s; localStorage.setItem('jpdrill_status', JSON.stringify(statusMap)); }
+};
+</script>
+</body>
+</html>

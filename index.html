@@ -31,7 +31,7 @@ h1 {
 /* カード全体 */
 .card-container {
   perspective: 1000px;
-  margin-bottom: 100px; /* ←ボタンと重ならないように余白追加 */
+  margin-bottom: 140px; /* 下ボタンとの距離を確保 */
 }
 
 .card {
@@ -153,7 +153,31 @@ button {
   display: flex;
   justify-content: center;
   gap: 15px;
-  margin-top: -60px; /* ←位置をカード下中央に近づける */
+  margin-top: -50px;
+}
+
+/* 一覧表示 */
+.jp-list {
+  margin-top: 40px;
+  width: 85%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.jp-item {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  padding: 10px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.jp-item:hover {
+  background: #e0f2f1;
 }
 </style>
 </head>
@@ -192,6 +216,9 @@ button {
   <button id="nextBtn" class="btn-blue">➡</button>
 </div>
 
+<!-- 日本語一覧 -->
+<div class="jp-list" id="jpList"></div>
+
 <script>
 const jpText = document.getElementById('jpText');
 const enText = document.getElementById('enText');
@@ -202,6 +229,7 @@ const rememberBtn = document.getElementById('rememberBtn');
 const notRememberBtn = document.getElementById('notRememberBtn');
 const progress = document.getElementById('progress');
 const card = document.getElementById('card');
+const jpList = document.getElementById('jpList');
 
 let cards = [];
 let cur = 0;
@@ -214,6 +242,7 @@ async function loadCards() {
   const res = await fetch('cards.json');
   cards = await res.json();
   updateCard();
+  renderList();
 }
 
 function updateCard() {
@@ -272,6 +301,22 @@ document.getElementById('prevBtn').onclick = () => {
   cur = (cur - 1 + cards.length) % cards.length;
   updateCard();
 };
+
+// 🔽 一覧生成
+function renderList() {
+  jpList.innerHTML = "";
+  cards.forEach((c, i) => {
+    const div = document.createElement("div");
+    div.textContent = c.JP;
+    div.className = "jp-item";
+    div.onclick = () => {
+      cur = i;
+      updateCard();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+    jpList.appendChild(div);
+  });
+}
 
 loadCards();
 </script>

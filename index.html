@@ -3,67 +3,119 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>瞬間英作文 Drill — JP→EN / Image→EN</title>
+<title>🌷 瞬間英作文カード</title>
 <style>
+  :root {
+    --accent:#ff7ca8;
+    --border:#f2f2f2;
+    --shadow:0 8px 20px rgba(0,0,0,.05);
+    --font: "Noto Sans JP", "Helvetica Neue", sans-serif;
+  }
   body {
-    margin: 0;
-    background: linear-gradient(180deg, #0b0c10, #0e1117);
-    color: #eaf1ff;
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", Helvetica, Arial;
+    margin:0;
+    font-family:var(--font);
+    background:#fafafa;
+    color:#333;
+    line-height:1.6;
+  }
+  h1 {
+    text-align:center;
+    font-weight:600;
+    font-size:1.4rem;
+    margin:30px 0 20px;
+    color:#ff7ca8;
   }
   .wrap {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 20px;
+    max-width:600px;
+    margin:0 auto;
+    padding:20px;
   }
   .card {
-    background: #141821;
-    border-radius: 12px;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, .4);
-    padding: 20px;
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:14px;
+    box-shadow:var(--shadow);
+    padding:25px 20px;
+    text-align:center;
+    transition:.3s;
   }
-  .jp { font-size: 22px; margin-bottom: 10px; }
-  .en { font-size: 20px; color: #bbf1ff; }
-  .muted { color: #9fb0c8; font-size: 14px; }
-  .audioBtn {
-    background: linear-gradient(90deg, #4da3ff, #22c55e);
-    border: none;
-    border-radius: 10px;
-    color: #021019;
-    padding: 10px 14px;
-    font-weight: 600;
-    cursor: pointer;
+  .card:hover { transform:translateY(-2px); }
+  .jp {
+    font-size:20px;
+    color:#555;
+    margin-bottom:12px;
   }
+  .divider {
+    height:1px;
+    background:#f0f0f0;
+    margin:16px 0;
+  }
+  .en {
+    font-size:20px;
+    color:#444;
+    display:none;
+  }
+  button {
+    font-family:var(--font);
+    border:none;
+    border-radius:25px;
+    padding:10px 18px;
+    margin:6px 4px;
+    cursor:pointer;
+    transition:all .2s ease;
+  }
+  .btn-main {
+    background:var(--accent);
+    color:#fff;
+    font-weight:600;
+  }
+  .btn-main:hover { background:#ff6198; }
+  .btn-sub {
+    background:#f3f3f3;
+    color:#555;
+  }
+  .btn-sub:hover { background:#e9e9e9; }
   select, input[type="range"] {
-    background: #1a2130;
-    color: #eaf1ff;
-    border-radius: 8px;
-    border: 1px solid #2b3648;
+    margin:6px;
+    border-radius:8px;
+    border:1px solid #ddd;
+    padding:4px;
+  }
+  footer {
+    text-align:center;
+    font-size:13px;
+    color:#999;
+    margin-top:30px;
   }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <h2>⚡ 瞬間英作文 Drill（GitHub Pages版・音声自動）</h2>
+  <h1>🌷 瞬間英作文カード</h1>
 
+  <div class="wrap">
     <div class="card">
       <div id="jpText" class="jp"></div>
-      <div id="enText" class="en" style="display:none"></div>
-      <div style="margin-top:12px">
-        <button id="revealBtn" class="audioBtn">解答を表示</button>
-        <button id="nextBtn" class="audioBtn">次のカード ▶</button>
-      </div>
-      <hr style="margin:20px 0;border:1px solid #1e2635">
-      <button id="playAudio" class="audioBtn">▶ 再生（英語TTS）</button>
-      <label style="margin-left:8px">Voice:
-        <select id="voiceSelect"><option value="">default</option></select>
-      </label>
-      <label style="margin-left:8px">Rate:
-        <input id="rate" type="range" min="0.8" max="1.4" step="0.1" value="1">
-      </label>
-    </div>
+      <div class="divider"></div>
+      <div id="enText" class="en"></div>
 
-    <p class="muted" style="margin-top:12px">ブラウザ内TTSを使用。音声ファイル不要・完全ローカル動作。</p>
+      <div style="margin-top:20px">
+        <button id="revealBtn" class="btn-main">解答を表示</button>
+        <button id="nextBtn" class="btn-sub">次のカード ▶</button>
+      </div>
+
+      <div class="divider"></div>
+      <div>
+        <button id="playAudio" class="btn-main">▶ 再生（英語TTS）</button>
+        <br>
+        <label>Voice:
+          <select id="voiceSelect"><option value="">default</option></select>
+        </label>
+        <label>Rate:
+          <input id="rate" type="range" min="0.8" max="1.4" step="0.1" value="1">
+        </label>
+      </div>
+    </div>
+    <footer>✨ Made with love — EIMARI ✨</footer>
   </div>
 
 <script>
@@ -97,6 +149,7 @@ function speak(text){
   const sel = voiceSelect.value;
   if(sel!==''){ u.voice = voices[parseInt(sel)]; u.lang=u.voice.lang; }
   u.rate = parseFloat(rateInput.value);
+  speechSynthesis.cancel();
   speechSynthesis.speak(u);
 }
 

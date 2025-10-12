@@ -5,177 +5,187 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>🌷 瞬間英作文カード</title>
 <style>
-  :root {
-    --accent: #ff7ca8;
-    --bg: #f8f8f8;
-    --surface: #fff;
-    --text: #333;
-  }
-  body {
-    margin:0;
-    font-family:"Noto Sans JP","Helvetica Neue",sans-serif;
-    background:var(--bg);
-    color:var(--text);
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    min-height:100vh;
-    padding:20px;
-  }
-  h1 {
-    color:var(--accent);
-    font-size:1.2rem;
-    margin-bottom:10px;
-  }
-  .progress {
-    font-size:14px;
-    color:#999;
-    margin-bottom:10px;
-  }
+body {
+  font-family: "Noto Sans JP", sans-serif;
+  background: #fafafa;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  justify-content: center;
+  color: #333;
+}
 
-  .card {
-    width:90%;
-    max-width:400px;
-    min-height:260px;
-    background:var(--surface);
-    border-radius:16px;
-    box-shadow:0 4px 12px rgba(0,0,0,0.1);
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    text-align:center;
-    padding:20px;
-  }
+h1 {
+  font-size: 1.3rem;
+  color: #f06292;
+  margin-bottom: 20px;
+}
 
-  .jp, .en {
-    font-size:20px;
-    margin:10px 0;
-  }
+.progress {
+  color: #999;
+  margin-bottom: 10px;
+}
 
-  .controls {
-    margin-top:15px;
-    display:flex;
-    justify-content:center;
-    gap:10px;
-    flex-wrap:wrap;
-  }
+.card-container {
+  perspective: 1000px;
+}
 
-  button, select {
-    border:none;
-    border-radius:25px;
-    padding:10px 16px;
-    font-size:15px;
-    cursor:pointer;
-    transition:0.2s;
-  }
-  .btn-pink { background:var(--accent); color:#fff; }
-  .btn-yellow { background:#f8c24a; color:#fff; }
-  .btn-blue { background:#4da7c1; color:#fff; }
-  .btn-pink:hover { background:#ff6198; }
+.card {
+  width: 320px;
+  height: 220px;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.6s;
+  cursor: pointer;
+}
 
-  .bottom-nav {
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    width:90%;
-    max-width:400px;
-    margin-top:20px;
-  }
+.card.flipped {
+  transform: rotateY(180deg);
+}
+
+.card-face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backface-visibility: hidden;
+  font-size: 20px;
+  padding: 20px;
+  text-align: center;
+}
+
+.card-back {
+  transform: rotateY(180deg);
+  flex-direction: column;
+}
+
+.controls {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+}
+
+button, select {
+  border: none;
+  border-radius: 25px;
+  padding: 8px 14px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn-pink { background: #f06292; color: #fff; }
+.btn-yellow { background: #fbc02d; color: #fff; }
+.btn-blue { background: #4fc3f7; color: #fff; }
+
+.btn-pink:hover { background: #ec407a; }
+
+.bottom-nav {
+  margin-top: 25px;
+  display: flex;
+  justify-content: space-between;
+  width: 300px;
+}
 </style>
 </head>
 <body>
-  <h1>🌷 瞬間英作文カード</h1>
-  <div class="progress" id="progress"></div>
 
+<h1>🌷 瞬間英作文カード</h1>
+<div class="progress" id="progress">Loading...</div>
+
+<div class="card-container">
   <div class="card" id="card">
-    <div class="jp" id="jpText"></div>
-    <div class="en" id="enText" style="display:none;"></div>
-    <div class="controls" id="controls">
-      <button id="flipBtn" class="btn-pink">💬 解答を見る</button>
-      <button id="playAudio" class="btn-blue" style="display:none;">▶ 再生</button>
-      <select id="speedSelect" style="display:none;">
-        <option value="0.8">0.8×</option>
-        <option value="1.0" selected>1.0×</option>
-        <option value="1.2">1.2×</option>
-      </select>
+    <div class="card-face card-front" id="jpText"></div>
+    <div class="card-face card-back">
+      <div id="enText"></div>
+      <div class="controls">
+        <button id="playAudio" class="btn-blue">▶ 再生</button>
+        <select id="speedSelect">
+          <option value="0.8">0.8×</option>
+          <option value="1.0" selected>1.0×</option>
+          <option value="1.2">1.2×</option>
+        </select>
+      </div>
     </div>
   </div>
+</div>
 
-  <div class="bottom-nav">
-    <button id="prevBtn" class="btn-yellow">⬅</button>
-    <button id="replayBtn" class="btn-pink">↻ もう一度</button>
-    <button id="nextBtn" class="btn-blue">➡</button>
-  </div>
+<div class="bottom-nav">
+  <button id="prevBtn" class="btn-yellow">⬅</button>
+  <button id="replayBtn" class="btn-pink">↻ もう一度</button>
+  <button id="nextBtn" class="btn-blue">➡</button>
+</div>
 
 <script>
+const card = document.getElementById('card');
+const jpText = document.getElementById('jpText');
+const enText = document.getElementById('enText');
+const playAudio = document.getElementById('playAudio');
+const speedSelect = document.getElementById('speedSelect');
+const progress = document.getElementById('progress');
+
 let cards = [];
 let cur = 0;
-let voices = [];
-let learned = JSON.parse(localStorage.getItem('learnedCards') || '{}');
 
-async function loadCards(){
-  const res = await fetch('cards.json');
-  cards = await res.json();
-  showCard();
-  updateProgress();
-  loadVoices();
-}
-function updateProgress(){
-  document.getElementById('progress').textContent = `${cur+1}/${cards.length}`;
-}
-function showCard(){
-  const jp = document.getElementById('jpText');
-  const en = document.getElementById('enText');
-  jp.textContent = cards[cur].JP;
-  en.textContent = cards[cur].ModelEN;
-  jp.style.display = 'block';
-  en.style.display = 'none';
-  document.getElementById('flipBtn').style.display='inline-block';
-  document.getElementById('playAudio').style.display='none';
-  document.getElementById('speedSelect').style.display='none';
+// 🎴 カード表示更新
+function updateCard() {
+  const item = cards[cur];
+  jpText.textContent = item.JP;
+  enText.textContent = item.ModelEN;
+  progress.textContent = `${cur + 1}/${cards.length}`;
+  card.classList.remove('flipped');
 }
 
-document.getElementById('flipBtn').onclick = ()=>{
-  document.getElementById('jpText').style.display='none';
-  document.getElementById('enText').style.display='block';
-  document.getElementById('flipBtn').style.display='none';
-  document.getElementById('playAudio').style.display='inline-block';
-  document.getElementById('speedSelect').style.display='inline-block';
-};
-
-document.getElementById('nextBtn').onclick = ()=>{
-  cur = (cur + 1) % cards.length;
-  showCard();
-  updateProgress();
-};
-document.getElementById('prevBtn').onclick = ()=>{
-  cur = (cur - 1 + cards.length) % cards.length;
-  showCard();
-  updateProgress();
-};
-
-function loadVoices(){
-  voices = speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
-}
-speechSynthesis.onvoiceschanged = loadVoices;
-
-function speak(text, rate=1){
+// 🎧 音声合成
+function speak(text, rate = 1) {
   const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-US';
   u.rate = rate;
-  const voice = voices.find(v => v.lang.includes('US')) || voices[0];
-  if(voice) u.voice = voice;
   speechSynthesis.cancel();
   speechSynthesis.speak(u);
 }
 
-document.getElementById('playAudio').onclick = ()=>{
-  const rate = parseFloat(document.getElementById('speedSelect').value);
-  speak(cards[cur].ModelEN, rate);
+// 📦 JSON読込
+async function loadCards() {
+  try {
+    const res = await fetch('cards.json');
+    cards = await res.json();
+    updateCard();
+  } catch (err) {
+    progress.textContent = 'カードデータを読み込めませんでした。';
+  }
+}
+
+// 📍 イベント
+card.addEventListener('click', () => {
+  card.classList.toggle('flipped');
+});
+
+document.getElementById('nextBtn').onclick = () => {
+  cur = (cur + 1) % cards.length;
+  updateCard();
 };
-document.getElementById('replayBtn').onclick = ()=>{
-  const rate = parseFloat(document.getElementById('speedSelect').value || 1);
-  speak(cards[cur].ModelEN, rate);
+
+document.getElementById('prevBtn').onclick = () => {
+  cur = (cur - 1 + cards.length) % cards.length;
+  updateCard();
+};
+
+playAudio.onclick = () => {
+  speak(cards[cur].ModelEN, parseFloat(speedSelect.value));
+};
+
+document.getElementById('replayBtn').onclick = () => {
+  speak(cards[cur].ModelEN, parseFloat(speedSelect.value));
 };
 
 loadCards();

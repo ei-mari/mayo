@@ -28,14 +28,15 @@ h1 {
   margin-bottom: 15px;
 }
 
-/* 🔄 カード全体の表裏アニメーション */
+/* カード全体 */
 .card-container {
   perspective: 1000px;
+  margin-bottom: 80px; /* 下のボタンと被らないよう余白追加 */
 }
 
 .card {
   width: 340px;
-  height: 260px;
+  height: 280px;
   position: relative;
   transition: transform 0.6s;
   transform-style: preserve-3d;
@@ -76,12 +77,13 @@ h1 {
   margin-bottom: 15px;
 }
 
+/* 音声プレイヤー */
 .audio-ui {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
-  margin-bottom: 15px;
+  margin-bottom: 25px; /* 被らないようマージン拡大 */
   width: 100%;
 }
 
@@ -126,6 +128,7 @@ h1 {
   color: #333;
 }
 
+/* ボタン群 */
 .memory-buttons {
   display: flex;
   justify-content: center;
@@ -148,7 +151,7 @@ button {
 .btn-yellow { background: #fbc02d; color: #fff; }
 
 .bottom-nav {
-  margin-top: 30px;
+  margin-top: 10px;
   display: flex;
   justify-content: center;
   gap: 15px;
@@ -224,7 +227,7 @@ function updateCard() {
   fill.style.width = "0%";
 }
 
-// 表→裏
+// 表→裏（クリック）
 card.addEventListener('click', () => {
   if (!flipped) {
     card.classList.add("flipped");
@@ -232,7 +235,7 @@ card.addEventListener('click', () => {
   }
 });
 
-// 🎧 再生
+// 🎧 音声再生
 function playAudio() {
   if (speechSynthesis.speaking) {
     speechSynthesis.cancel();
@@ -254,10 +257,12 @@ function playAudio() {
 playBtn.onclick = playAudio;
 document.getElementById('replayBtn').onclick = playAudio;
 
-// ✅ 覚えた / 覚えていない
+// ✅ 覚えた／覚えていない
 rememberBtn.onclick = notRememberBtn.onclick = (e) => {
   learnedStatus[cur] = (e.target.id === "rememberBtn");
   localStorage.setItem('learnedStatus', JSON.stringify(learnedStatus));
+
+  // 🔁 次のカードへ（日本語面に自動戻る）
   nextCard();
 };
 

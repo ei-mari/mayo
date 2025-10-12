@@ -23,30 +23,57 @@ h1 {
 }
 
 .progress {
-  color: #999;
-  margin-bottom: 20px;
+  color: #26a69a;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+/* 🔄 カード全体の表裏アニメーション */
+.card-container {
+  perspective: 1000px;
 }
 
 .card {
   width: 340px;
-  background: #fff;
+  height: 260px;
+  position: relative;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+  cursor: pointer;
+}
+
+.card.flipped {
+  transform: rotateY(180deg);
+}
+
+.front, .back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
   border-radius: 20px;
   box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+  background: #fff;
   padding: 25px 20px;
   text-align: center;
-  transition: 0.4s;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
-.jpText {
-  font-size: 18px;
-  color: #2c3e50;
-  margin-bottom: 15px;
-}
-
-.sentence {
+.front {
   font-size: 20px;
   color: #2c3e50;
-  margin: 20px 0;
+}
+
+.back {
+  transform: rotateY(180deg);
+}
+
+.enText {
+  font-size: 20px;
+  color: #2c3e50;
+  margin-bottom: 15px;
 }
 
 .audio-ui {
@@ -54,23 +81,21 @@ h1 {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
+  width: 100%;
 }
 
 .play-btn {
   background: #26a69a;
   border: none;
   border-radius: 50%;
-  width: 50px;
-  height: 50px;
+  width: 46px;
+  height: 46px;
   color: white;
-  font-size: 22px;
+  font-size: 20px;
   cursor: pointer;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-
-.play-btn:hover {
-  background: #2bbbad;
+  flex-shrink: 0;
 }
 
 .progress-bar {
@@ -89,14 +114,14 @@ h1 {
   width: 0;
   background: #26a69a;
   border-radius: 3px;
-  transition: width 0.3s;
+  transition: width 0.4s;
 }
 
 .speed-select {
   border: none;
-  background: #f5f5f5;
+  background: #f1f1f1;
   border-radius: 6px;
-  padding: 4px 6px;
+  padding: 4px 8px;
   font-size: 13px;
   color: #333;
 }
@@ -104,26 +129,23 @@ h1 {
 .memory-buttons {
   display: flex;
   justify-content: center;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 12px;
+  margin-top: 5px;
 }
 
 button {
   border: none;
   border-radius: 25px;
-  padding: 10px 14px;
+  padding: 10px 16px;
   font-size: 14px;
   cursor: pointer;
   transition: 0.2s;
   box-shadow: 0 3px 6px rgba(0,0,0,0.1);
 }
 
-.btn-pink { background: #ef5350; color: #fff; }
 .btn-blue { background: #42a5f5; color: #fff; }
+.btn-pink { background: #ef5350; color: #fff; }
 .btn-yellow { background: #fbc02d; color: #fff; }
-
-.btn-pink:hover { background: #e53935; }
-.btn-blue:hover { background: #1e88e5; }
 
 .bottom-nav {
   margin-top: 30px;
@@ -136,25 +158,29 @@ button {
 <body>
 
 <h1>🌷 瞬間英作文カード</h1>
-<div class="progress" id="progress">Loading...</div>
+<div class="progress" id="progress">1/8</div>
 
-<div class="card" id="card">
-  <div class="jpText" id="jpText"></div>
-  <div class="sentence" id="enText"></div>
-
-  <div class="audio-ui">
-    <button id="playBtn" class="play-btn">▶</button>
-    <div class="progress-bar"><div id="fill" class="progress-fill"></div></div>
-    <select id="speedSelect" class="speed-select">
-      <option value="0.8">0.8×</option>
-      <option value="1.0" selected>1.0×</option>
-      <option value="1.2">1.2×</option>
-    </select>
-  </div>
-
-  <div class="memory-buttons">
-    <button id="rememberBtn" class="btn-blue">覚えた！</button>
-    <button id="notRememberBtn" class="btn-pink">まだ覚えていない</button>
+<div class="card-container">
+  <div class="card" id="card">
+    <div class="front" id="front">
+      <div id="jpText">英語でなんて言うか忘れちゃった。</div>
+    </div>
+    <div class="back" id="back">
+      <div class="enText" id="enText">I forgot how to say it in English.</div>
+      <div class="audio-ui">
+        <button id="playBtn" class="play-btn">▶</button>
+        <div class="progress-bar"><div id="fill" class="progress-fill"></div></div>
+        <select id="speedSelect" class="speed-select">
+          <option value="0.8">0.8×</option>
+          <option value="1.0" selected>1.0×</option>
+          <option value="1.2">1.2×</option>
+        </select>
+      </div>
+      <div class="memory-buttons">
+        <button id="rememberBtn" class="btn-blue">覚えた！</button>
+        <button id="notRememberBtn" class="btn-pink">まだ覚えていない</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -173,33 +199,40 @@ const speedSelect = document.getElementById('speedSelect');
 const rememberBtn = document.getElementById('rememberBtn');
 const notRememberBtn = document.getElementById('notRememberBtn');
 const progress = document.getElementById('progress');
+const card = document.getElementById('card');
 
 let cards = [];
 let cur = 0;
 let utter;
 let learnedStatus = {};
+let flipped = false;
 
 // JSON 読み込み
 async function loadCards() {
-  try {
-    const res = await fetch('cards.json');
-    cards = await res.json();
-    updateCard();
-  } catch {
-    progress.textContent = 'カードデータを読み込めませんでした。';
-  }
+  const res = await fetch('cards.json');
+  cards = await res.json();
+  updateCard();
 }
 
 function updateCard() {
-  if (!cards.length) return;
   const item = cards[cur];
   jpText.textContent = item.JP;
   enText.textContent = item.ModelEN;
   progress.textContent = `${cur + 1}/${cards.length}`;
+  card.classList.remove("flipped");
+  flipped = false;
   fill.style.width = "0%";
 }
 
-// 音声再生
+// 表→裏
+card.addEventListener('click', () => {
+  if (!flipped) {
+    card.classList.add("flipped");
+    flipped = true;
+  }
+});
+
+// 🎧 再生
 function playAudio() {
   if (speechSynthesis.speaking) {
     speechSynthesis.cancel();
@@ -212,7 +245,7 @@ function playAudio() {
   utter.rate = rate;
   utter.onstart = () => {
     fill.style.width = "0%";
-    fill.animate([{ width: "0%" }, { width: "100%" }], { duration: 1500 / rate, fill: "forwards" });
+    fill.animate([{ width: "0%" }, { width: "100%" }], { duration: 1600 / rate, fill: "forwards" });
   };
   utter.onend = () => fill.style.width = "100%";
   speechSynthesis.speak(utter);
@@ -221,18 +254,18 @@ function playAudio() {
 playBtn.onclick = playAudio;
 document.getElementById('replayBtn').onclick = playAudio;
 
-// 覚えた / 覚えてない
-rememberBtn.onclick = notRememberBtn.onclick = () => {
-  learnedStatus[cur] = (event.target.id === "rememberBtn");
+// ✅ 覚えた / 覚えていない
+rememberBtn.onclick = notRememberBtn.onclick = (e) => {
+  learnedStatus[cur] = (e.target.id === "rememberBtn");
   localStorage.setItem('learnedStatus', JSON.stringify(learnedStatus));
   nextCard();
 };
 
+// カード移動
 function nextCard() {
   cur = (cur + 1) % cards.length;
   updateCard();
 }
-
 document.getElementById('nextBtn').onclick = nextCard;
 document.getElementById('prevBtn').onclick = () => {
   cur = (cur - 1 + cards.length) % cards.length;

@@ -28,9 +28,10 @@ h1 {
   margin-bottom: 15px;
 }
 
-/* カードのアニメーション */
+/* カード全体 */
 .card-container {
   perspective: 1000px;
+  margin-bottom: 100px; /* ←ボタンと重ならないように余白追加 */
 }
 
 .card {
@@ -76,6 +77,7 @@ h1 {
   margin-bottom: 15px;
 }
 
+/* 音声プレイヤー */
 .audio-ui {
   display: flex;
   align-items: center;
@@ -148,10 +150,10 @@ button {
 .btn-yellow { background: #fbc02d; color: #fff; }
 
 .bottom-nav {
-  margin-top: 40px;
   display: flex;
   justify-content: center;
   gap: 15px;
+  margin-top: -60px; /* ←位置をカード下中央に近づける */
 }
 </style>
 </head>

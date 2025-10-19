@@ -104,6 +104,55 @@ button{ border:none; border-radius:25px; padding:10px 16px; font-size:14px; curs
 .jp-item:hover{ background:#eaf7f5; }
 .jp-item.active{ background:#26a69a; color:#fff; }
 .jp-empty{ color:#999; text-align:center; padding:10px 0; }
+
+
+/* === spacing tune for mobile-first === */
+:root{
+  --header-h: 56px;              /* 固定ヘッダー高さ（小さめ） */
+  --space-card-top: 8px;         /* ヘッダー下〜カード上の余白 */
+  --space-card-bottom: 84px;     /* カード下〜ナビの余白（重なり防止の最低限） */
+  --nav-lift: -24px;             /* ナビの持ち上げ（負の値で上に寄せる） */
+  --mode-gap-top: 6px;           /* ナビとチェックの間隔 */
+}
+
+/* ヘッダーをコンパクトに */
+.appbar{ height: var(--header-h); }
+.appbar h1{ margin: 4px 0 0; font-size: 1.2rem; }
+#progress{ margin-top: 0; }
+
+/* カードの上下余白を詰める */
+.card-container{
+  margin: var(--space-card-top) auto var(--space-card-bottom);
+}
+
+/* ナビを少し上に寄せる（重なりはしない幅） */
+.bottom-nav{
+  margin-top: var(--nav-lift);
+}
+
+/* チェックボックスをナビに近づける */
+.mode-toggle{
+  margin: var(--mode-gap-top) auto 8px;
+}
+
+/* リストとチェックの間も詰め気味に */
+.jp-list{
+  margin-top: 6px;
+}
+
+/* 画面の縦が低い端末はさらに詰める */
+@media (max-height: 700px){
+  :root{
+    --header-h: 52px;
+    --space-card-top: 6px;
+    --space-card-bottom: 72px;
+    --nav-lift: -20px;
+    --mode-gap-top: 4px;
+  }
+  .front, .back{ padding: 24px 20px; }
+  .enText, .front{ font-size: 20px; }
+}
+  
 </style>
 </head>
 <body>

@@ -6,11 +6,12 @@
 <title>🌷 瞬間英作文カード</title>
 <style>
 :root{
-  /* ここを変えるとカード幅と一覧幅がまとめて変わる */
-  --content-max: 520px;
-  --content-side: 92vw;
+  --header-h: 64px;                 /* 固定ヘッダー高 */
+  --content-max: 520px;             /* カード/一覧の最大幅 */
+  --content-side: 92vw;             /* 画面に対する幅 */
 }
 
+html { scroll-behavior: smooth; scroll-padding-top: var(--header-h); }
 body {
   font-family: "Noto Sans JP", sans-serif;
   background: #f5f7fa;
@@ -18,27 +19,30 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-height: 100vh;
+  min-height: 100svh;               /* スマホのURLバー高さ変動に強い */
   color: #333;
 }
 
-h1 {
-  font-size: 1.3rem;
-  color: #26a69a;
-  margin: 35px 0 10px;
+/* 固定ヘッダー（タイトル＋1/8） */
+.appbar{
+  position: sticky; top: 0; z-index: 50;
+  height: var(--header-h);
+  width: 100%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  background: rgba(245,247,250,.9);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid #e6eef2;
 }
-
-.progress {
-  color: #26a69a;
-  font-weight: bold;
-  margin-bottom: 15px;
+.appbar h1{
+  font-size: 1.25rem; color: #26a69a; margin: 6px 0 2px;
 }
+#progress{ color:#26a69a; font-weight:700; }
 
-/* カード：幅を一覧と同じに統一し中央寄せ */
 .card-container {
   width: min(var(--content-side), var(--content-max));
   perspective: 1000px;
-  margin: 0 auto 140px; /* 下ボタンと重ならない余白 */
+  margin: 16px auto 120px;          /* 下ナビと被らない余白 */
+  scroll-margin-top: calc(var(--header-h) + 8px); /* ←ヘッダーぶん補正 */
 }
 
 .card {
@@ -49,169 +53,80 @@ h1 {
   transform-style: preserve-3d;
   cursor: pointer;
 }
-
 .card.flipped { transform: rotateY(180deg); }
 
 .front, .back {
-  position: absolute;
-  inset: 0;
+  position: absolute; inset: 0;
   backface-visibility: hidden;
   border-radius: 20px;
   box-shadow: 0 8px 20px rgba(0,0,0,0.08);
   background: #fff;
   padding: 28px 24px;
   text-align: center;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  display: flex; flex-direction: column; justify-content: center;
 }
-
 .front { font-size: 22px; color: #2c3e50; }
 .back  { transform: rotateY(180deg); }
-
-.enText {
-  font-size: 22px;
-  color: #2c3e50;
-  margin-bottom: 16px;
-}
+.enText{ font-size: 22px; color:#2c3e50; margin-bottom:16px; }
 
 /* 音声プレイヤー */
-.audio-ui {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-bottom: 16px;
-  width: 100%;
+.audio-ui{ display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:16px; width:100%; }
+.play-btn{
+  background:#26a69a; border:none; border-radius:50%; width:50px; height:50px;
+  color:#fff; font-size:22px; cursor:pointer; box-shadow:0 4px 10px rgba(0,0,0,.1); flex-shrink:0;
 }
-
-.play-btn {
-  background: #26a69a;
-  border: none;
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  color: white;
-  font-size: 22px;
-  cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  flex-shrink: 0;
-}
-
-.progress-bar {
-  flex-grow: 1;
-  height: 6px;
-  background: #e0e0e0;
-  border-radius: 3px;
-  position: relative;
-}
-.progress-fill {
-  position: absolute;
-  height: 6px;
-  left: 0; top: 0;
-  width: 0;
-  background: #26a69a;
-  border-radius: 3px;
-  transition: width 0.4s;
-}
-
-.speed-select {
-  border: none;
-  background: #f1f1f1;
-  border-radius: 6px;
-  padding: 4px 8px;
-  font-size: 13px;
-  color: #333;
-}
+.progress-bar{ flex:1; height:6px; background:#e0e0e0; border-radius:3px; position:relative; }
+.progress-fill{ position:absolute; inset:0 auto 0 0; width:0; height:6px; background:#26a69a; border-radius:3px; transition:width .4s; }
+.speed-select{ border:none; background:#f1f1f1; border-radius:6px; padding:4px 8px; font-size:13px; color:#333; }
 
 /* 裏面ボタン */
-.memory-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 6px;
-}
+.memory-buttons{ display:flex; justify-content:center; gap:12px; margin-top:6px; }
+button{ border:none; border-radius:25px; padding:10px 16px; font-size:14px; cursor:pointer; transition:.2s; box-shadow:0 3px 6px rgba(0,0,0,.1); }
+.btn-blue{ background:#42a5f5; color:#fff; } .btn-pink{ background:#ef5350; color:#fff; } .btn-yellow{ background:#fbc02d; color:#fff; }
 
-button {
-  border: none;
-  border-radius: 25px;
-  padding: 10px 16px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: 0.2s;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-}
-.btn-blue { background: #42a5f5; color: #fff; }
-.btn-pink { background: #ef5350; color: #fff; }
-.btn-yellow { background: #fbc02d; color: #fff; }
-
-.bottom-nav {
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-  margin-top: -50px;
-}
+/* 下ナビ */
+.bottom-nav{ display:flex; justify-content:center; gap:15px; margin-top:-42px; }
 
 /* モード切替 */
-.mode-toggle {
-  margin: 12px 0 6px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #555;
-  font-size: 14px;
-}
+.mode-toggle{ width:min(var(--content-side), var(--content-max)); margin:6px auto 8px; display:flex; align-items:center; gap:8px; color:#555; font-size:14px; }
 
-/* 日本語一覧：カードと同じ幅に統一 */
-.jp-list {
+/* 日本語一覧（カードと同幅） */
+.jp-list{
   width: min(var(--content-side), var(--content-max));
-  margin: 8px auto 24px;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
+  margin: 0 auto 24px;
+  display: grid; grid-template-columns: 1fr; gap: 8px;
+  scroll-margin-top: calc(var(--header-h) + 8px); /* ←ヘッダー補正 */
 }
-.jp-item {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-  padding: 12px 14px;
-  font-size: 15px;
-  line-height: 1.5;
-  cursor: pointer;
-  transition: background 0.2s;
+.jp-item{
+  background:#fff; border-radius:12px; box-shadow:0 2px 5px rgba(0,0,0,.05);
+  padding:12px 14px; font-size:15px; line-height:1.5; cursor:pointer; transition: background .2s;
 }
-.jp-item:hover { background: #eaf7f5; }
-.jp-item.active { background: #26a69a; color: #fff; }
-
-.jp-empty { color: #999; text-align: center; padding: 10px 0; }
+.jp-item:hover{ background:#eaf7f5; }
+.jp-item.active{ background:#26a69a; color:#fff; }
+.jp-empty{ color:#999; text-align:center; padding:10px 0; }
 </style>
 </head>
 <body>
 
-<h1>🌷 瞬間英作文カード</h1>
-<div class="progress" id="progress">Loading...</div>
+<!-- 固定ヘッダー -->
+<header class="appbar">
+  <h1>🌷 瞬間英作文カード</h1>
+  <div id="progress">Loading...</div>
+</header>
 
-<div class="card-container">
+<!-- カード -->
+<div class="card-container" id="cardContainer">
   <div class="card" id="card">
-    <!-- 表：日本語のみ -->
-    <div class="front" id="front">
-      <div id="jpText">読み込み中...</div>
-    </div>
-
-    <!-- 裏：回答 / 音声 / ボタン -->
-    <div class="back" id="back">
+    <div class="front"><div id="jpText">読み込み中...</div></div>
+    <div class="back">
       <div class="enText" id="enText"></div>
-
       <div class="audio-ui" id="audioUI">
         <button id="playBtn" class="play-btn">▶</button>
         <div class="progress-bar"><div id="fill" class="progress-fill"></div></div>
         <select id="speedSelect" class="speed-select">
-          <option value="0.8">0.8×</option>
-          <option value="1.0" selected>1.0×</option>
-          <option value="1.2">1.2×</option>
+          <option value="0.8">0.8×</option><option value="1.0" selected>1.0×</option><option value="1.2">1.2×</option>
         </select>
       </div>
-
       <div class="memory-buttons">
         <button id="rememberBtn" class="btn-blue">覚えた！</button>
         <button id="notRememberBtn" class="btn-pink">まだ覚えていない</button>
@@ -220,6 +135,7 @@ button {
   </div>
 </div>
 
+<!-- ナビ -->
 <div class="bottom-nav">
   <button id="prevBtn" class="btn-yellow">⬅</button>
   <button id="replayBtn" class="btn-pink">↻ もう一度</button>
@@ -232,10 +148,11 @@ button {
   <label for="unlearnedOnly">覚えていない単語だけ表示</label>
 </div>
 
-<!-- 日本語一覧（クリックでジャンプ） -->
+<!-- 日本語一覧 -->
 <div class="jp-list" id="jpList"></div>
 
 <script>
+/* 参照 */
 const jpText = document.getElementById('jpText');
 const enText = document.getElementById('enText');
 const playBtn = document.getElementById('playBtn');
@@ -248,190 +165,128 @@ const card = document.getElementById('card');
 const jpList = document.getElementById('jpList');
 const audioUI = document.getElementById('audioUI');
 const unlearnedOnlyChk = document.getElementById('unlearnedOnly');
+const cardContainer = document.getElementById('cardContainer');
 
 let cards = [];
 let cur = 0;
-let learnedStatus = JSON.parse(localStorage.getItem('learnedStatus') || '{}'); // { index: true/false }
+let learnedStatus = JSON.parse(localStorage.getItem('learnedStatus') || '{}');
 let flipped = false;
 let unlearnedOnly = false;
 
-/* ====== TTS: アメリカ女性声を優先選択 ====== */
+/* —— TTS: 米女性声を優先 —— */
 let selectedVoice = null;
-
 function chooseAmericanFemale(voices){
-  // 優先度の高い女性名の候補
-  const femaleHints = [
-    /aria/i, /jenny/i, /samantha/i, /joanna/i, /kendra/i, /zira/i, /allison/i, /michelle/i, /lisa/i
-  ];
-  // 1) en-US かつ女性っぽい名前
-  let v = voices.find(v => (v.lang||'').toLowerCase().startsWith('en-us') &&
-                           femaleHints.some(rx => rx.test(v.name)));
-  if (v) return v;
-  // 2) en-US の最初の音声
-  v = voices.find(v => (v.lang||'').toLowerCase().startsWith('en-us'));
-  if (v) return v;
-  // 3) en- で始まる最初
-  return voices.find(v => (v.lang||'').toLowerCase().startsWith('en')) || null;
+  const female = [/aria/i,/jenny/i,/samantha/i,/joanna/i,/kendra/i,/zira/i,/allison/i,/michelle/i,/lisa/i];
+  return voices.find(v => (v.lang||'').toLowerCase().startsWith('en-us') && female.some(rx=>rx.test(v.name)))
+      || voices.find(v => (v.lang||'').toLowerCase().startsWith('en-us'))
+      || voices.find(v => (v.lang||'').toLowerCase().startsWith('en')) || null;
+}
+function loadVoices(){ selectedVoice = chooseAmericanFemale(speechSynthesis.getVoices()); }
+speechSynthesis.onvoiceschanged = loadVoices; loadVoices();
+
+/* —— JSON 読み込み —— */
+async function loadCards(){
+  try{
+    const res = await fetch('cards.json'); cards = await res.json();
+    updateCard(); renderList();
+  }catch(e){ jpText.textContent='カードデータを読み込めませんでした。'; progress.textContent=''; }
 }
 
-function loadVoices(){
-  const voices = speechSynthesis.getVoices();
-  selectedVoice = chooseAmericanFemale(voices);
-}
-speechSynthesis.onvoiceschanged = loadVoices;
-loadVoices();
-
-/* ====== JSON 読み込み ====== */
-async function loadCards() {
-  try {
-    const res = await fetch('cards.json');
-    cards = await res.json();
-    updateCard();
-    renderList();
-  } catch (e) {
-    jpText.textContent = 'カードデータを読み込めませんでした。';
-    progress.textContent = '';
-  }
-}
-
-/* ====== 表示更新 ====== */
-function updateCard() {
-  if (!cards.length) return;
-  const item = cards[cur];
-  jpText.textContent = item.JP;
-  enText.textContent = item.ModelEN;
-  progress.textContent = `${cur + 1}/${cards.length}`;
-  // 表面に戻す
-  card.classList.remove("flipped");
-  flipped = false;
-  // 再生バー初期化
-  fill.style.width = "0%";
+/* —— カード更新（位置を安定させる） —— */
+function updateCard(){
+  if(!cards.length) return;
+  const it = cards[cur];
+  jpText.textContent = it.JP; enText.textContent = it.ModelEN;
+  progress.textContent = `${cur+1}/${cards.length}`;
+  card.classList.remove('flipped'); flipped = false;
+  fill.style.width = '0%';
   updateListHighlight();
+  scrollCardIntoView();   // ←常に同じ位置へ
 }
 
-/* ====== 可視インデックス（未学習モード対応） ====== */
-function getVisibleIndices() {
-  if (!unlearnedOnly) return cards.map((_, i) => i);
-  return cards.map((_, i) => i).filter(i => learnedStatus[i] !== true);
+/* カードをヘッダー下にピタッと合わせる */
+function scrollCardIntoView(){
+  const headerH = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-h')) || 64;
+  const rect = cardContainer.getBoundingClientRect();
+  const offset = rect.top - headerH - 8;                // 上に8pxの余白
+  if (Math.abs(offset) > 1) window.scrollBy({ top: offset, behavior: 'smooth' });
 }
 
-/* ====== 次 / 前 ====== */
-function nextCard() {
-  const vis = getVisibleIndices();
-  if (vis.length === 0) { alert('未学習のカードはありません🎉'); return; }
-  const pos = Math.max(0, vis.indexOf(cur));
-  cur = vis[(pos + 1) % vis.length];
+/* 可視インデックス（未学習モード） */
+function getVisibleIndices(){
+  if(!unlearnedOnly) return cards.map((_,i)=>i);
+  return cards.map((_,i)=>i).filter(i => learnedStatus[i] !== true);
+}
+
+/* 次/前 */
+function nextCard(){
+  const vis = getVisibleIndices(); if(!vis.length){ alert('未学習のカードはありません🎉'); return; }
+  const pos = Math.max(0, vis.indexOf(cur)); cur = vis[(pos+1)%vis.length];
   updateCard();
-  scrollTopAndListToCurrent();
 }
-function prevCard() {
-  const vis = getVisibleIndices();
-  if (vis.length === 0) return;
-  const pos = vis.indexOf(cur);
-  cur = vis[(pos - 1 + vis.length) % vis.length];
+function prevCard(){
+  const vis = getVisibleIndices(); if(!vis.length) return;
+  const pos = vis.indexOf(cur); cur = vis[(pos-1+vis.length)%vis.length];
   updateCard();
-  scrollTopAndListToCurrent();
 }
 
-/* ====== カードクリック（表⇄裏） ====== */
-card.addEventListener('click', () => {
-  flipped = !flipped;
-  card.classList.toggle("flipped", flipped);
-});
+/* カードタップで表⇄裏 */
+card.addEventListener('click', ()=>{ flipped=!flipped; card.classList.toggle('flipped', flipped); });
+[playBtn, speedSelect, rememberBtn, notRememberBtn, audioUI].forEach(el=>el.addEventListener('click', e=>e.stopPropagation()));
 
-/* 子要素クリックでの裏返り防止 */
-[playBtn, speedSelect, rememberBtn, notRememberBtn, audioUI].forEach(el => {
-  el.addEventListener('click', e => e.stopPropagation());
-});
-
-/* ====== 音声再生（TTS） ====== */
-function playAudio() {
-  if (!cards.length) return;
-  if (speechSynthesis.speaking) {
-    speechSynthesis.cancel();
-    fill.style.width = "0%";
-    return;
-  }
-  const rate = parseFloat(speedSelect.value);
+/* TTS */
+function playAudio(){
+  if(!cards.length) return;
+  if(speechSynthesis.speaking){ speechSynthesis.cancel(); fill.style.width='0%'; return; }
   const u = new SpeechSynthesisUtterance(cards[cur].ModelEN);
-  u.lang = 'en-US';
-  u.rate = rate;
-  if (selectedVoice) u.voice = selectedVoice; // アメリカ女性声を適用
-  u.onstart = () => {
-    fill.style.width = "0%";
-    fill.animate([{ width: "0%" }, { width: "100%" }], { duration: 1600 / rate, fill: "forwards" });
-  };
-  u.onend = () => fill.style.width = "100%";
+  u.lang = 'en-US'; u.rate = parseFloat(speedSelect.value); if(selectedVoice) u.voice = selectedVoice;
+  u.onstart = ()=>{ fill.style.width='0%'; fill.animate([{width:'0%'},{width:'100%'}], {duration:1600/u.rate, fill:'forwards'}); };
+  u.onend   = ()=>{ fill.style.width='100%'; };
   speechSynthesis.speak(u);
 }
 playBtn.onclick = playAudio;
 document.getElementById('replayBtn').onclick = playAudio;
 
-/* ====== 覚えた / 覚えていない → 次の表面へ ====== */
-rememberBtn.onclick = notRememberBtn.onclick = (e) => {
-  const remembered = (e.target.id === "rememberBtn");
-  learnedStatus[cur] = remembered;
+/* 覚えた/覚えていない → 次の表面へ */
+rememberBtn.onclick = notRememberBtn.onclick = (e)=>{
+  learnedStatus[cur] = (e.target.id === 'rememberBtn');
   localStorage.setItem('learnedStatus', JSON.stringify(learnedStatus));
-  renderList();   // 未学習モード時はリストを更新
-  nextCard();
+  renderList(); nextCard();
 };
 
-/* ====== ナビゲーション ====== */
+/* ナビ */
 document.getElementById('nextBtn').onclick = nextCard;
 document.getElementById('prevBtn').onclick = prevCard;
 
-/* ====== 日本語一覧 ====== */
-function renderList() {
+/* 一覧 */
+function renderList(){
   jpList.innerHTML = '';
   const vis = getVisibleIndices();
-  if (vis.length === 0) {
-    const empty = document.createElement('div');
-    empty.className = 'jp-empty';
-    empty.textContent = unlearnedOnly ? '未学習のカードはありません🎉' : 'カードがありません';
-    jpList.appendChild(empty);
-    return;
-  }
-  vis.forEach(i => {
-    const div = document.createElement('div');
-    div.className = 'jp-item';
-    div.dataset.index = i;
-    div.textContent = cards[i].JP;
-    div.onclick = () => { cur = i; updateCard(); scrollTopAndListToCurrent(); };
+  if(!vis.length){ const d=document.createElement('div'); d.className='jp-empty'; d.textContent = unlearnedOnly?'未学習のカードはありません🎉':'カードがありません'; jpList.appendChild(d); return; }
+  vis.forEach(i=>{
+    const div=document.createElement('div'); div.className='jp-item'; div.dataset.index=i; div.textContent=cards[i].JP;
+    div.onclick=()=>{ cur=i; updateCard(); };
     jpList.appendChild(div);
   });
   updateListHighlight();
 }
-function updateListHighlight() {
-  jpList.querySelectorAll('.jp-item').forEach(el => {
-    el.classList.toggle('active', Number(el.dataset.index) === cur);
-  });
-}
-function scrollTopAndListToCurrent() {
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-  const active = jpList.querySelector(`.jp-item[data-index="${cur}"]`);
-  if (active) active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+function updateListHighlight(){
+  jpList.querySelectorAll('.jp-item').forEach(el=>el.classList.toggle('active', Number(el.dataset.index)===cur));
 }
 
-/* ====== 未学習モード切替 ====== */
-unlearnedOnlyChk.addEventListener('change', () => {
+/* 未学習モード切替 */
+unlearnedOnlyChk.addEventListener('change', ()=>{
   unlearnedOnly = unlearnedOnlyChk.checked;
   const vis = getVisibleIndices();
-  if (unlearnedOnly && learnedStatus[cur] === true) {
-    if (vis.length === 0) {
-      alert('未学習のカードはありません🎉');
-      unlearnedOnlyChk.checked = false;
-      unlearnedOnly = false;
-    } else {
-      cur = vis[0];
-    }
+  if(unlearnedOnly && learnedStatus[cur]===true){
+    if(!vis.length){ alert('未学習のカードはありません🎉'); unlearnedOnly=false; unlearnedOnlyChk.checked=false; }
+    else { cur = vis[0]; }
   }
-  renderList();
-  updateCard();
+  renderList(); updateCard();
 });
 
-/* 初期化 */
-loadVoices();
-loadCards();
+/* init */
+loadVoices(); loadCards();
 </script>
 </body>
 </html>

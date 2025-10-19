@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>🌷 瞬間英作文カード</title>
 <style>
+:root{
+  /* ここを変えるとカード幅と一覧幅がまとめて変わる */
+  --content-max: 520px;
+  --content-side: 92vw;
+}
+
 body {
   font-family: "Noto Sans JP", sans-serif;
   background: #f5f7fa;
@@ -28,15 +34,16 @@ h1 {
   margin-bottom: 15px;
 }
 
-/* カード */
+/* カード：幅を一覧と同じに統一し中央寄せ */
 .card-container {
+  width: min(var(--content-side), var(--content-max));
   perspective: 1000px;
-  margin-bottom: 140px; /* 下ボタンと重ならないように余白 */
+  margin: 0 auto 140px; /* 下ボタンと重ならない余白 */
 }
 
 .card {
-  width: 340px;
-  height: 260px;
+  width: 100%;
+  min-height: 260px;
   position: relative;
   transition: transform 0.6s;
   transform-style: preserve-3d;
@@ -47,26 +54,25 @@ h1 {
 
 .front, .back {
   position: absolute;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   backface-visibility: hidden;
   border-radius: 20px;
   box-shadow: 0 8px 20px rgba(0,0,0,0.08);
   background: #fff;
-  padding: 25px 20px;
+  padding: 28px 24px;
   text-align: center;
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
-.front { font-size: 20px; color: #2c3e50; }
-.back { transform: rotateY(180deg); }
+.front { font-size: 22px; color: #2c3e50; }
+.back  { transform: rotateY(180deg); }
 
 .enText {
-  font-size: 20px;
+  font-size: 22px;
   color: #2c3e50;
-  margin-bottom: 15px;
+  margin-bottom: 16px;
 }
 
 /* 音声プレイヤー */
@@ -75,7 +81,7 @@ h1 {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  margin-bottom: 15px;
+  margin-bottom: 16px;
   width: 100%;
 }
 
@@ -83,10 +89,10 @@ h1 {
   background: #26a69a;
   border: none;
   border-radius: 50%;
-  width: 46px;
-  height: 46px;
+  width: 50px;
+  height: 50px;
   color: white;
-  font-size: 20px;
+  font-size: 22px;
   cursor: pointer;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
   flex-shrink: 0;
@@ -123,7 +129,7 @@ h1 {
   display: flex;
   justify-content: center;
   gap: 12px;
-  margin-top: 10px;
+  margin-top: 6px;
 }
 
 button {
@@ -135,7 +141,6 @@ button {
   transition: 0.2s;
   box-shadow: 0 3px 6px rgba(0,0,0,0.1);
 }
-
 .btn-blue { background: #42a5f5; color: #fff; }
 .btn-pink { background: #ef5350; color: #fff; }
 .btn-yellow { background: #fbc02d; color: #fff; }
@@ -157,37 +162,28 @@ button {
   font-size: 14px;
 }
 
-/* 日本語一覧 */
+/* 日本語一覧：カードと同じ幅に統一 */
 .jp-list {
-  margin: 8px 0 24px;
-  width: 90%;
-  max-width: 420px;
+  width: min(var(--content-side), var(--content-max));
+  margin: 8px auto 24px;
   display: grid;
   grid-template-columns: 1fr;
   gap: 8px;
 }
-
 .jp-item {
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-  padding: 10px 12px;
-  font-size: 14px;
-  line-height: 1.45;
+  padding: 12px 14px;
+  font-size: 15px;
+  line-height: 1.5;
   cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
+  transition: background 0.2s;
 }
 .jp-item:hover { background: #eaf7f5; }
-.jp-item.active {
-  background: #26a69a;
-  color: #fff;
-}
+.jp-item.active { background: #26a69a; color: #fff; }
 
-.jp-empty {
-  color: #999;
-  text-align: center;
-  padding: 10px 0;
-}
+.jp-empty { color: #999; text-align: center; padding: 10px 0; }
 </style>
 </head>
 <body>
@@ -240,7 +236,6 @@ button {
 <div class="jp-list" id="jpList"></div>
 
 <script>
-/* ---- 要素参照 ---- */
 const jpText = document.getElementById('jpText');
 const enText = document.getElementById('enText');
 const playBtn = document.getElementById('playBtn');
@@ -256,12 +251,37 @@ const unlearnedOnlyChk = document.getElementById('unlearnedOnly');
 
 let cards = [];
 let cur = 0;
-let utter;
 let learnedStatus = JSON.parse(localStorage.getItem('learnedStatus') || '{}'); // { index: true/false }
 let flipped = false;
 let unlearnedOnly = false;
 
-/* ---- JSON 読み込み ---- */
+/* ====== TTS: アメリカ女性声を優先選択 ====== */
+let selectedVoice = null;
+
+function chooseAmericanFemale(voices){
+  // 優先度の高い女性名の候補
+  const femaleHints = [
+    /aria/i, /jenny/i, /samantha/i, /joanna/i, /kendra/i, /zira/i, /allison/i, /michelle/i, /lisa/i
+  ];
+  // 1) en-US かつ女性っぽい名前
+  let v = voices.find(v => (v.lang||'').toLowerCase().startsWith('en-us') &&
+                           femaleHints.some(rx => rx.test(v.name)));
+  if (v) return v;
+  // 2) en-US の最初の音声
+  v = voices.find(v => (v.lang||'').toLowerCase().startsWith('en-us'));
+  if (v) return v;
+  // 3) en- で始まる最初
+  return voices.find(v => (v.lang||'').toLowerCase().startsWith('en')) || null;
+}
+
+function loadVoices(){
+  const voices = speechSynthesis.getVoices();
+  selectedVoice = chooseAmericanFemale(voices);
+}
+speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
+
+/* ====== JSON 読み込み ====== */
 async function loadCards() {
   try {
     const res = await fetch('cards.json');
@@ -274,100 +294,93 @@ async function loadCards() {
   }
 }
 
-/* ---- 表示更新 ---- */
+/* ====== 表示更新 ====== */
 function updateCard() {
   if (!cards.length) return;
   const item = cards[cur];
   jpText.textContent = item.JP;
   enText.textContent = item.ModelEN;
   progress.textContent = `${cur + 1}/${cards.length}`;
-  // 必ず表面に戻す
+  // 表面に戻す
   card.classList.remove("flipped");
   flipped = false;
   // 再生バー初期化
   fill.style.width = "0%";
-  // 一覧のハイライト更新
   updateListHighlight();
 }
 
-/* ---- 可視インデックス（モード対応） ---- */
+/* ====== 可視インデックス（未学習モード対応） ====== */
 function getVisibleIndices() {
   if (!unlearnedOnly) return cards.map((_, i) => i);
-  // learnedStatus[i] === true が「覚えた」
   return cards.map((_, i) => i).filter(i => learnedStatus[i] !== true);
 }
 
-/* ---- 次 / 前 ---- */
+/* ====== 次 / 前 ====== */
 function nextCard() {
   const vis = getVisibleIndices();
-  if (vis.length === 0) {
-    alert('未学習のカードはありません🎉');
-    return;
-  }
+  if (vis.length === 0) { alert('未学習のカードはありません🎉'); return; }
   const pos = Math.max(0, vis.indexOf(cur));
-  const nextIdx = vis[(pos + 1) % vis.length];
-  cur = nextIdx;
+  cur = vis[(pos + 1) % vis.length];
   updateCard();
   scrollTopAndListToCurrent();
 }
-
 function prevCard() {
   const vis = getVisibleIndices();
   if (vis.length === 0) return;
   const pos = vis.indexOf(cur);
-  const prevIdx = vis[(pos - 1 + vis.length) % vis.length];
-  cur = prevIdx;
+  cur = vis[(pos - 1 + vis.length) % vis.length];
   updateCard();
   scrollTopAndListToCurrent();
 }
 
-/* ---- カードクリック（表⇄裏） ---- */
+/* ====== カードクリック（表⇄裏） ====== */
 card.addEventListener('click', () => {
   flipped = !flipped;
   card.classList.toggle("flipped", flipped);
 });
 
-/* ---- 子要素クリックでの裏返り防止 ---- */
+/* 子要素クリックでの裏返り防止 */
 [playBtn, speedSelect, rememberBtn, notRememberBtn, audioUI].forEach(el => {
   el.addEventListener('click', e => e.stopPropagation());
 });
 
-/* ---- 音声再生（TTS） ---- */
+/* ====== 音声再生（TTS） ====== */
 function playAudio() {
+  if (!cards.length) return;
   if (speechSynthesis.speaking) {
     speechSynthesis.cancel();
     fill.style.width = "0%";
     return;
   }
   const rate = parseFloat(speedSelect.value);
-  utter = new SpeechSynthesisUtterance(cards[cur].ModelEN);
-  utter.lang = 'en-US';
-  utter.rate = rate;
-  utter.onstart = () => {
+  const u = new SpeechSynthesisUtterance(cards[cur].ModelEN);
+  u.lang = 'en-US';
+  u.rate = rate;
+  if (selectedVoice) u.voice = selectedVoice; // アメリカ女性声を適用
+  u.onstart = () => {
     fill.style.width = "0%";
     fill.animate([{ width: "0%" }, { width: "100%" }], { duration: 1600 / rate, fill: "forwards" });
   };
-  utter.onend = () => fill.style.width = "100%";
-  speechSynthesis.speak(utter);
+  u.onend = () => fill.style.width = "100%";
+  speechSynthesis.speak(u);
 }
 playBtn.onclick = playAudio;
 document.getElementById('replayBtn').onclick = playAudio;
 
-/* ---- 覚えた / 覚えていない → 次の表面へ ---- */
+/* ====== 覚えた / 覚えていない → 次の表面へ ====== */
 rememberBtn.onclick = notRememberBtn.onclick = (e) => {
   const remembered = (e.target.id === "rememberBtn");
   learnedStatus[cur] = remembered;
   localStorage.setItem('learnedStatus', JSON.stringify(learnedStatus));
-  // リスト再描画（未学習モード時は項目が減る）
-  renderList();
+  renderList();   // 未学習モード時はリストを更新
   nextCard();
 };
 
-/* ---- ナビゲーション ---- */
+/* ====== ナビゲーション ====== */
 document.getElementById('nextBtn').onclick = nextCard;
 document.getElementById('prevBtn').onclick = prevCard;
 
-/* ---- 日本語一覧 ---- */
+/* ====== 日本語一覧 ====== */
 function renderList() {
   jpList.innerHTML = '';
   const vis = getVisibleIndices();
@@ -383,35 +396,27 @@ function renderList() {
     div.className = 'jp-item';
     div.dataset.index = i;
     div.textContent = cards[i].JP;
-    div.onclick = () => {
-      cur = i;
-      updateCard();
-      scrollTopAndListToCurrent();
-    };
+    div.onclick = () => { cur = i; updateCard(); scrollTopAndListToCurrent(); };
     jpList.appendChild(div);
   });
   updateListHighlight();
 }
-
 function updateListHighlight() {
-  const items = jpList.querySelectorAll('.jp-item');
-  items.forEach(el => {
+  jpList.querySelectorAll('.jp-item').forEach(el => {
     el.classList.toggle('active', Number(el.dataset.index) === cur);
   });
 }
-
 function scrollTopAndListToCurrent() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
   const active = jpList.querySelector(`.jp-item[data-index="${cur}"]`);
   if (active) active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 }
 
-/* ---- 覚えていないモード切替 ---- */
+/* ====== 未学習モード切替 ====== */
 unlearnedOnlyChk.addEventListener('change', () => {
   unlearnedOnly = unlearnedOnlyChk.checked;
   const vis = getVisibleIndices();
-  if (unlearnedOnly && (learnedStatus[cur] === true)) {
-    // 現在カードが「覚えた」なら、最初の未学習へ移動
+  if (unlearnedOnly && learnedStatus[cur] === true) {
     if (vis.length === 0) {
       alert('未学習のカードはありません🎉');
       unlearnedOnlyChk.checked = false;
@@ -424,7 +429,8 @@ unlearnedOnlyChk.addEventListener('change', () => {
   updateCard();
 });
 
-/* ---- 初期化 ---- */
+/* 初期化 */
+loadVoices();
 loadCards();
 </script>
 </body>

@@ -28,10 +28,10 @@ h1 {
   margin-bottom: 15px;
 }
 
-/* カード全体 */
+/* カード */
 .card-container {
   perspective: 1000px;
-  margin-bottom: 140px; /* 下ボタンとの距離を確保 */
+  margin-bottom: 140px;
 }
 
 .card {
@@ -155,30 +155,6 @@ button {
   gap: 15px;
   margin-top: -50px;
 }
-
-/* 一覧表示 */
-.jp-list {
-  margin-top: 40px;
-  width: 85%;
-  max-width: 380px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.jp-item {
-  background: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-  padding: 10px 12px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.jp-item:hover {
-  background: #e0f2f1;
-}
 </style>
 </head>
 <body>
@@ -189,10 +165,11 @@ button {
 <div class="card-container">
   <div class="card" id="card">
     <div class="front" id="front">
-      <div id="jpText">英語でなんて言うか忘れちゃった。</div>
+      <div id="jpText">読み込み中...</div>
     </div>
     <div class="back" id="back">
-      <div class="enText" id="enText">I forgot how to say it in English.</div>
+      <div class="enText" id="enText"></div>
+
       <div class="audio-ui">
         <button id="playBtn" class="play-btn">▶</button>
         <div class="progress-bar"><div id="fill" class="progress-fill"></div></div>
@@ -202,6 +179,7 @@ button {
           <option value="1.2">1.2×</option>
         </select>
       </div>
+
       <div class="memory-buttons">
         <button id="rememberBtn" class="btn-blue">覚えた！</button>
         <button id="notRememberBtn" class="btn-pink">まだ覚えていない</button>
@@ -216,9 +194,6 @@ button {
   <button id="nextBtn" class="btn-blue">➡</button>
 </div>
 
-<!-- 日本語一覧 -->
-<div class="jp-list" id="jpList"></div>
-
 <script>
 const jpText = document.getElementById('jpText');
 const enText = document.getElementById('enText');
@@ -229,7 +204,6 @@ const rememberBtn = document.getElementById('rememberBtn');
 const notRememberBtn = document.getElementById('notRememberBtn');
 const progress = document.getElementById('progress');
 const card = document.getElementById('card');
-const jpList = document.getElementById('jpList');
 
 let cards = [];
 let cur = 0;
@@ -237,14 +211,18 @@ let utter;
 let learnedStatus = {};
 let flipped = false;
 
-// JSON 読み込み
+// --- JSON 読み込み ---
 async function loadCards() {
-  const res = await fetch('cards.json');
-  cards = await res.json();
-  updateCard();
-  renderList();
+  try {
+    const res = await fetch('cards.json');
+    cards = await res.json();
+    updateCard();
+  } catch (e) {
+    jpText.textContent = 'カードデータを読み込めませんでした。';
+  }
 }
 
+// --- カード更新 ---
 function updateCard() {
   const item = cards[cur];
   jpText.textContent = item.JP;
@@ -255,13 +233,13 @@ function updateCard() {
   fill.style.width = "0%";
 }
 
-// 🔄 カードクリックで表裏トグル
+// --- カードクリック（表⇄裏） ---
 card.addEventListener('click', () => {
   flipped = !flipped;
   card.classList.toggle("flipped", flipped);
 });
 
-// 🎧 再生
+// --- 音声再生（TTS） ---
 function playAudio() {
   if (speechSynthesis.speaking) {
     speechSynthesis.cancel();
@@ -283,40 +261,24 @@ function playAudio() {
 playBtn.onclick = playAudio;
 document.getElementById('replayBtn').onclick = playAudio;
 
-// ✅ 覚えた / 覚えていない
+// --- 覚えた／覚えていない → 次のカードの表に ---
 rememberBtn.onclick = notRememberBtn.onclick = (e) => {
   learnedStatus[cur] = (e.target.id === "rememberBtn");
   localStorage.setItem('learnedStatus', JSON.stringify(learnedStatus));
   nextCard();
 };
 
-// ▶ 次のカード（日本語）
+// --- 次のカード ---
 function nextCard() {
   cur = (cur + 1) % cards.length;
   updateCard();
 }
 
-document.getElementById('nextBtn').onclick = nextCard;
+// --- 前のカード ---
 document.getElementById('prevBtn').onclick = () => {
   cur = (cur - 1 + cards.length) % cards.length;
   updateCard();
 };
-
-// 🔽 一覧生成
-function renderList() {
-  jpList.innerHTML = "";
-  cards.forEach((c, i) => {
-    const div = document.createElement("div");
-    div.textContent = c.JP;
-    div.className = "jp-item";
-    div.onclick = () => {
-      cur = i;
-      updateCard();
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    };
-    jpList.appendChild(div);
-  });
-}
 
 loadCards();
 </script>

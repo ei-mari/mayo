@@ -14,5 +14,21 @@
   {
     "JP": "これ英語でなんて言うの？",
     "ModelEN": "How do you say this in English?"
+  },
+  {
+    "JP": "おかしいところがあれば直してください。",
+    "ModelEN": "Please correct me if anything sounds unnatural."
+  },
+  {
+    "JP": "英語をスラスラと話せるように早くなりたいです。",
+    "ModelEN": "I want to get better at speaking English quickly."
+  },
+  {
+    "JP": "私に英語を教えてください。",
+    "ModelEN": "Please teach me English."
+  },
+  {
+    "JP": "頑張ります！！",
+    "ModelEN": "I’ll do my best!"
   }
 ]

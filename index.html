@@ -31,7 +31,7 @@ h1 {
 /* カード */
 .card-container {
   perspective: 1000px;
-  margin-bottom: 140px;
+  margin-bottom: 140px; /* 下ボタンと重ならないように余白 */
 }
 
 .card {
@@ -43,9 +43,7 @@ h1 {
   cursor: pointer;
 }
 
-.card.flipped {
-  transform: rotateY(180deg);
-}
+.card.flipped { transform: rotateY(180deg); }
 
 .front, .back {
   position: absolute;
@@ -62,14 +60,8 @@ h1 {
   justify-content: center;
 }
 
-.front {
-  font-size: 20px;
-  color: #2c3e50;
-}
-
-.back {
-  transform: rotateY(180deg);
-}
+.front { font-size: 20px; color: #2c3e50; }
+.back { transform: rotateY(180deg); }
 
 .enText {
   font-size: 20px;
@@ -107,12 +99,10 @@ h1 {
   border-radius: 3px;
   position: relative;
 }
-
 .progress-fill {
   position: absolute;
   height: 6px;
-  left: 0;
-  top: 0;
+  left: 0; top: 0;
   width: 0;
   background: #26a69a;
   border-radius: 3px;
@@ -128,6 +118,7 @@ h1 {
   color: #333;
 }
 
+/* 裏面ボタン */
 .memory-buttons {
   display: flex;
   justify-content: center;
@@ -155,22 +146,67 @@ button {
   gap: 15px;
   margin-top: -50px;
 }
+
+/* モード切替 */
+.mode-toggle {
+  margin: 12px 0 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #555;
+  font-size: 14px;
+}
+
+/* 日本語一覧 */
+.jp-list {
+  margin: 8px 0 24px;
+  width: 90%;
+  max-width: 420px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.jp-item {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  padding: 10px 12px;
+  font-size: 14px;
+  line-height: 1.45;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+.jp-item:hover { background: #eaf7f5; }
+.jp-item.active {
+  background: #26a69a;
+  color: #fff;
+}
+
+.jp-empty {
+  color: #999;
+  text-align: center;
+  padding: 10px 0;
+}
 </style>
 </head>
 <body>
 
 <h1>🌷 瞬間英作文カード</h1>
-<div class="progress" id="progress">1/8</div>
+<div class="progress" id="progress">Loading...</div>
 
 <div class="card-container">
   <div class="card" id="card">
+    <!-- 表：日本語のみ -->
     <div class="front" id="front">
       <div id="jpText">読み込み中...</div>
     </div>
+
+    <!-- 裏：回答 / 音声 / ボタン -->
     <div class="back" id="back">
       <div class="enText" id="enText"></div>
 
-      <div class="audio-ui">
+      <div class="audio-ui" id="audioUI">
         <button id="playBtn" class="play-btn">▶</button>
         <div class="progress-bar"><div id="fill" class="progress-fill"></div></div>
         <select id="speedSelect" class="speed-select">
@@ -194,7 +230,17 @@ button {
   <button id="nextBtn" class="btn-blue">➡</button>
 </div>
 
+<!-- モード切替 -->
+<div class="mode-toggle">
+  <input type="checkbox" id="unlearnedOnly" />
+  <label for="unlearnedOnly">覚えていない単語だけ表示</label>
+</div>
+
+<!-- 日本語一覧（クリックでジャンプ） -->
+<div class="jp-list" id="jpList"></div>
+
 <script>
+/* ---- 要素参照 ---- */
 const jpText = document.getElementById('jpText');
 const enText = document.getElementById('enText');
 const playBtn = document.getElementById('playBtn');
@@ -204,42 +250,89 @@ const rememberBtn = document.getElementById('rememberBtn');
 const notRememberBtn = document.getElementById('notRememberBtn');
 const progress = document.getElementById('progress');
 const card = document.getElementById('card');
+const jpList = document.getElementById('jpList');
+const audioUI = document.getElementById('audioUI');
+const unlearnedOnlyChk = document.getElementById('unlearnedOnly');
 
 let cards = [];
 let cur = 0;
 let utter;
-let learnedStatus = {};
+let learnedStatus = JSON.parse(localStorage.getItem('learnedStatus') || '{}'); // { index: true/false }
 let flipped = false;
+let unlearnedOnly = false;
 
-// --- JSON 読み込み ---
+/* ---- JSON 読み込み ---- */
 async function loadCards() {
   try {
     const res = await fetch('cards.json');
     cards = await res.json();
     updateCard();
+    renderList();
   } catch (e) {
     jpText.textContent = 'カードデータを読み込めませんでした。';
+    progress.textContent = '';
   }
 }
 
-// --- カード更新 ---
+/* ---- 表示更新 ---- */
 function updateCard() {
+  if (!cards.length) return;
   const item = cards[cur];
   jpText.textContent = item.JP;
   enText.textContent = item.ModelEN;
   progress.textContent = `${cur + 1}/${cards.length}`;
+  // 必ず表面に戻す
   card.classList.remove("flipped");
   flipped = false;
+  // 再生バー初期化
   fill.style.width = "0%";
+  // 一覧のハイライト更新
+  updateListHighlight();
 }
 
-// --- カードクリック（表⇄裏） ---
+/* ---- 可視インデックス（モード対応） ---- */
+function getVisibleIndices() {
+  if (!unlearnedOnly) return cards.map((_, i) => i);
+  // learnedStatus[i] === true が「覚えた」
+  return cards.map((_, i) => i).filter(i => learnedStatus[i] !== true);
+}
+
+/* ---- 次 / 前 ---- */
+function nextCard() {
+  const vis = getVisibleIndices();
+  if (vis.length === 0) {
+    alert('未学習のカードはありません🎉');
+    return;
+  }
+  const pos = Math.max(0, vis.indexOf(cur));
+  const nextIdx = vis[(pos + 1) % vis.length];
+  cur = nextIdx;
+  updateCard();
+  scrollTopAndListToCurrent();
+}
+
+function prevCard() {
+  const vis = getVisibleIndices();
+  if (vis.length === 0) return;
+  const pos = vis.indexOf(cur);
+  const prevIdx = vis[(pos - 1 + vis.length) % vis.length];
+  cur = prevIdx;
+  updateCard();
+  scrollTopAndListToCurrent();
+}
+
+/* ---- カードクリック（表⇄裏） ---- */
 card.addEventListener('click', () => {
   flipped = !flipped;
   card.classList.toggle("flipped", flipped);
 });
 
-// --- 音声再生（TTS） ---
+/* ---- 子要素クリックでの裏返り防止 ---- */
+[playBtn, speedSelect, rememberBtn, notRememberBtn, audioUI].forEach(el => {
+  el.addEventListener('click', e => e.stopPropagation());
+});
+
+/* ---- 音声再生（TTS） ---- */
 function playAudio() {
   if (speechSynthesis.speaking) {
     speechSynthesis.cancel();
@@ -257,29 +350,81 @@ function playAudio() {
   utter.onend = () => fill.style.width = "100%";
   speechSynthesis.speak(utter);
 }
-
 playBtn.onclick = playAudio;
 document.getElementById('replayBtn').onclick = playAudio;
 
-// --- 覚えた／覚えていない → 次のカードの表に ---
+/* ---- 覚えた / 覚えていない → 次の表面へ ---- */
 rememberBtn.onclick = notRememberBtn.onclick = (e) => {
-  learnedStatus[cur] = (e.target.id === "rememberBtn");
+  const remembered = (e.target.id === "rememberBtn");
+  learnedStatus[cur] = remembered;
   localStorage.setItem('learnedStatus', JSON.stringify(learnedStatus));
+  // リスト再描画（未学習モード時は項目が減る）
+  renderList();
   nextCard();
 };
 
-// --- 次のカード ---
-function nextCard() {
-  cur = (cur + 1) % cards.length;
-  updateCard();
+/* ---- ナビゲーション ---- */
+document.getElementById('nextBtn').onclick = nextCard;
+document.getElementById('prevBtn').onclick = prevCard;
+
+/* ---- 日本語一覧 ---- */
+function renderList() {
+  jpList.innerHTML = '';
+  const vis = getVisibleIndices();
+  if (vis.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'jp-empty';
+    empty.textContent = unlearnedOnly ? '未学習のカードはありません🎉' : 'カードがありません';
+    jpList.appendChild(empty);
+    return;
+  }
+  vis.forEach(i => {
+    const div = document.createElement('div');
+    div.className = 'jp-item';
+    div.dataset.index = i;
+    div.textContent = cards[i].JP;
+    div.onclick = () => {
+      cur = i;
+      updateCard();
+      scrollTopAndListToCurrent();
+    };
+    jpList.appendChild(div);
+  });
+  updateListHighlight();
 }
 
-// --- 前のカード ---
-document.getElementById('prevBtn').onclick = () => {
-  cur = (cur - 1 + cards.length) % cards.length;
-  updateCard();
-};
+function updateListHighlight() {
+  const items = jpList.querySelectorAll('.jp-item');
+  items.forEach(el => {
+    el.classList.toggle('active', Number(el.dataset.index) === cur);
+  });
+}
 
+function scrollTopAndListToCurrent() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  const active = jpList.querySelector(`.jp-item[data-index="${cur}"]`);
+  if (active) active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+/* ---- 覚えていないモード切替 ---- */
+unlearnedOnlyChk.addEventListener('change', () => {
+  unlearnedOnly = unlearnedOnlyChk.checked;
+  const vis = getVisibleIndices();
+  if (unlearnedOnly && (learnedStatus[cur] === true)) {
+    // 現在カードが「覚えた」なら、最初の未学習へ移動
+    if (vis.length === 0) {
+      alert('未学習のカードはありません🎉');
+      unlearnedOnlyChk.checked = false;
+      unlearnedOnly = false;
+    } else {
+      cur = vis[0];
+    }
+  }
+  renderList();
+  updateCard();
+});
+
+/* ---- 初期化 ---- */
 loadCards();
 </script>
 </body>
